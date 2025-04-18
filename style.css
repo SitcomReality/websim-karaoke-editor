@@ -191,6 +191,32 @@ body {
      background-color: rgba(91, 192, 222, 0.1); 
 }
 
+#lyrics-list.show-times li {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+#lyrics-list li .lyric-time-field {
+    display: inline-block;
+    min-width: 76px;
+    max-width: 90px;
+    text-align: right;
+    font-family: monospace;
+    font-size: 1em;
+    color: #888;
+    opacity: 0.85;
+    margin-right: 10px;
+    flex-shrink: 0;
+    white-space: pre;
+}
+#lyrics-list li .lyric-line-text {
+    flex-grow: 1;
+    text-align: left;
+    display: inline-block;
+}
+
 .controls-container {
     position: fixed;
     bottom: 0;

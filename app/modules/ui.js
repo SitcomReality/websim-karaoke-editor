@@ -32,10 +32,23 @@ export const elements = {
     nudgeEndBackButton: document.getElementById('nudge-end-back'),
     nudgeEndForwardButton: document.getElementById('nudge-end-forward'),
     clearLineTimesButton: document.getElementById('clear-line-times'),
+    lyricsContainer: document.querySelector('.lyrics-container'),
 };
+
+let isTimingEditorVisible = false;
+let lastLyricsForTimes = [];
+let lastLineTimes = null;
 
 export function init() {
     updateLayoutPadding(false);
+}
+
+export function setTimingEditorVisible(visible) {
+    isTimingEditorVisible = visible;
+    // Optionally update existing lyrics display
+    if (lastLyricsForTimes && lastLyricsForTimes.length) {
+        displayLyrics(lastLyricsForTimes, lastLineTimes);
+    }
 }
 
 export function setLoading(isLoading, message = "Loading...") {
@@ -47,7 +60,16 @@ export function updateProjectName(title) {
     elements.songTitle.textContent = title;
 }
 
-export function displayLyrics(lyrics) {
+/**
+ * Render the lyrics list. If in timing editor, shows line start/end times.
+ * @param {Array} lyrics - Array of lyric lines, each { text, start, end }
+ * @param {Function|Array} [lineTimes] - Optional: array of {start, end} (or function for advanced)
+ */
+export function displayLyrics(lyrics, lineTimes) {
+    // Save arguments for re-render when timing editor mode is toggled
+    lastLyricsForTimes = lyrics;
+    lastLineTimes = lineTimes;
+
     const ul = elements.lyricsList;
     ul.innerHTML = '';
     if (!lyrics || !lyrics.length) {
@@ -57,10 +79,25 @@ export function displayLyrics(lyrics) {
         ul.appendChild(li);
         return;
     }
+    ul.classList.toggle('show-times', isTimingEditorVisible);
+
     lyrics.forEach((line, idx) => {
         const li = document.createElement('li');
-        li.textContent = line.text || '';
         li.dataset.idx = idx;
+
+        if (isTimingEditorVisible) {
+            // Timing-edit mode: show times in a left column
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'lyric-time-field';
+            timeSpan.textContent = formatLineTimes(line);
+            li.appendChild(timeSpan);
+        }
+
+        // Lyric text span (preserves alignment if time column is present)
+        const textSpan = document.createElement('span');
+        textSpan.className = 'lyric-line-text';
+        textSpan.textContent = line.text || '';
+        li.appendChild(textSpan);
         ul.appendChild(li);
     });
 }
@@ -102,21 +139,34 @@ export function updateProgressBar(currentTime = 0, duration = 0) {
     if (elements.durationLabel) elements.durationLabel.textContent = formatTime(duration);
 }
 
-// Helper for formatting time
 export function formatTime(val) {
-    return requireFormatTime(val);
-}
-function requireFormatTime(val) {
     if (val == null || isNaN(val)) return '0:00';
     const min = Math.floor(val / 60);
     const sec = Math.floor(val % 60);
     return `${min}:${sec < 10 ? '0' : ''}${sec}`;
 }
 
+function formatLineTimes(line) {
+    // Returns "[mm:ss]-[mm:ss]" or "[mm:ss]" or "--:--" if no info
+    if (typeof line.start === "number" && !isNaN(line.start)) {
+        const start = formatTime(line.start);
+        if (typeof line.end === "number" && !isNaN(line.end)) {
+            return `[${start} – ${formatTime(line.end)}]`;
+        }
+        return `[${start}]`;
+    }
+    return '[--:--]';
+}
+
 export function updateLayoutPadding(isEditorVisible) {
+    isTimingEditorVisible = isEditorVisible;
     const mainContent = document.querySelector('.main-content');
     const editorHeight = elements.timingEditorDiv?.offsetHeight || 0;
     if (mainContent) {
         mainContent.style.paddingBottom = isEditorVisible ? `${editorHeight + 20}px` : '15px';
+    }
+    // Re-render lyrics to show/hide times as needed
+    if (lastLyricsForTimes && lastLyricsForTimes.length) {
+        displayLyrics(lastLyricsForTimes, lastLineTimes);
     }
 }

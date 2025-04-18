@@ -111,37 +111,45 @@ function setupCoreEventListeners() {
         LyricsEditor.setCurrentLineStart(ct);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
+        // Show updated line times
+        UI.displayLyrics(lyricsArray);
     });
     UI.elements.setLineEndButton.addEventListener('click', () => {
         const ct = getAudioTime();
         LyricsEditor.setCurrentLineEnd(ct);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
+        UI.displayLyrics(lyricsArray);
     });
     UI.elements.nudgeStartBackButton.addEventListener('click', () => {
         LyricsEditor.nudgeCurrentLineStart(-0.1);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
+        UI.displayLyrics(lyricsArray);
     });
     UI.elements.nudgeStartForwardButton.addEventListener('click', () => {
         LyricsEditor.nudgeCurrentLineStart(0.1);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
+        UI.displayLyrics(lyricsArray);
     });
     UI.elements.nudgeEndBackButton.addEventListener('click', () => {
         LyricsEditor.nudgeCurrentLineEnd(-0.1);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
+        UI.displayLyrics(lyricsArray);
     });
     UI.elements.nudgeEndForwardButton.addEventListener('click', () => {
         LyricsEditor.nudgeCurrentLineEnd(0.1);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
+        UI.displayLyrics(lyricsArray);
     });
     UI.elements.clearLineTimesButton.addEventListener('click', () => {
         LyricsEditor.clearCurrentLineTimes();
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
+        UI.displayLyrics(lyricsArray);
     });
 }
 
@@ -319,7 +327,12 @@ function toggleTimingEditor() {
         UI.elements.lyricsList.classList.remove('editable');
         LyricsEditor.disableEditing();
     }
+    UI.setTimingEditorVisible(isEditing);
     UI.updateLayoutPadding(isEditing);
+    // Re-render lyrics to show/hide times for left column
+    if (lyricsArray && lyricsArray.length) {
+        UI.displayLyrics(lyricsArray);
+    }
 }
 
 //=== PLAYBACK UI logic ===
