@@ -2,9 +2,9 @@
 // Handles the display state of the timing editor panel and its fields.
 
 import { elements } from './elements.js';
-import { displayLyrics } from './ui.js';
-import { updateLayoutPadding } from './ui.js';
-import { formatTime } from './ui.js'; // Needs time formatting
+import { displayLyrics } from '../ui.js';
+import { updateLayoutPadding } from '../ui.js';
+import { formatTime } from '../ui.js'; // Needs time formatting
 
 
 /**
