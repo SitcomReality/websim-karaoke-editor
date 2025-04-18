@@ -1,0 +1,331 @@
+:root {
+    --background-color: #f0f0f0;
+    --text-color: #333;
+    --highlight-bg-color: #ffff99;
+    --highlight-text-color: #000;
+    --panel-bg-color: #e0e0e0;
+    --panel-border-color: #ccc;
+    --button-bg-color: #d0d0d0;
+    --button-hover-bg-color: #c0c0c0;
+    --header-bg-color: #d8d8d8;
+    --control-bg-color: #e8e8e8;
+    --font-family: 'Arial', sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align items to the top */
+    min-height: 100vh;
+    padding-top: 20px; /* Add some padding at the top */
+    box-sizing: border-box;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 300px; /* Main content and sidebar */
+    grid-template-rows: auto 1fr auto; /* Header, content, controls */
+    grid-template-areas:
+        "header sidebar"
+        "main   sidebar"
+        "controls sidebar";
+    gap: 15px;
+    width: 95%;
+    max-width: 1200px;
+    background-color: var(--background-color); /* Ensure container bg matches body */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    min-height: calc(100vh - 40px); /* Adjust for body padding */
+    box-sizing: border-box;
+}
+
+.main-header {
+    grid-area: header;
+    background-color: var(--header-bg-color);
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center content horizontally */
+    gap: 15px;
+    min-height: 80px; /* Ensure header has some height */
+}
+
+#song-image-container {
+    max-width: 150px; /* Limit image preview size */
+    max-height: 80px;
+    overflow: hidden; /* Hide overflow */
+    display: flex; /* Center image within */
+    align-items: center;
+    justify-content: center;
+}
+
+#song-image {
+    max-width: 100%;
+    max-height: 100%;
+    display: block; /* Remove extra space below image */
+    object-fit: contain; /* Scale image nicely */
+}
+
+
+.main-content {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent content overflow issues */
+}
+
+.lyrics-container {
+    flex-grow: 1;
+    overflow-y: auto; /* Enable scrolling for lyrics */
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border-radius: 5px;
+    margin-bottom: 15px;
+    scroll-behavior: smooth; /* Smooth scrolling */
+    border: 1px solid var(--panel-border-color);
+}
+
+#lyrics-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+#lyrics-list li {
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    font-size: 1.2em;
+    cursor: pointer; /* Indicate lines are clickable (for editor) */
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    opacity: 0.7; /* Slightly fade non-active lines */
+}
+
+#lyrics-list li:hover {
+     background-color: rgba(0, 0, 0, 0.05);
+}
+
+#lyrics-list li.current {
+    background-color: var(--highlight-bg-color);
+    color: var(--highlight-text-color);
+    font-weight: bold;
+    transform: scale(1.05); /* Slightly larger */
+    opacity: 1.0;
+}
+
+#lyrics-list li.editing {
+    outline: 2px solid blue; /* Highlight line being edited */
+}
+
+
+.controls-container {
+    grid-area: controls;
+    background-color: var(--control-bg-color);
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.playback-controls, .progress-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.progress-controls {
+    width: 100%;
+}
+
+#progress-bar {
+    flex-grow: 1;
+    cursor: pointer;
+}
+#volume-slider {
+    width: 80px;
+    cursor: pointer;
+}
+
+.timing-editor {
+    background-color: var(--panel-bg-color);
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+    border: 1px solid var(--panel-border-color);
+}
+
+.timing-editor h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.timing-editor button {
+     margin: 5px 2px;
+}
+
+.sidebar {
+    grid-area: sidebar;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto; /* Allow sidebar panels to scroll if needed */
+    max-height: calc(100vh - 40px); /* Match container height */
+    padding-right: 5px; /* Space for scrollbar */
+}
+
+.panel {
+    background-color: var(--panel-bg-color);
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid var(--panel-border-color);
+}
+
+.panel h3, .panel h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--panel-border-color);
+    padding-bottom: 5px;
+}
+
+.panel label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 3px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.panel input[type="file"],
+.panel input[type="text"],
+.panel select {
+    display: block;
+    width: calc(100% - 12px); /* Account for padding */
+    padding: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+}
+
+.panel input[type="color"] {
+    width: 40px;
+    height: 25px;
+    padding: 0;
+    border: none;
+    vertical-align: middle;
+    margin: 0 5px 5px 0;
+    cursor: pointer;
+}
+
+.color-palette {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+button {
+    padding: 8px 15px;
+    background-color: var(--button-bg-color);
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin: 5px 5px 5px 0; /* Add some spacing between buttons */
+}
+
+button:hover {
+    background-color: var(--button-hover-bg-color);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+.history-panel ul, .playlist-panel ul, .assets-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px; /* Limit list height */
+    overflow-y: auto;
+    border: 1px dashed #ccc;
+    padding: 5px;
+    background: rgba(255,255,255,0.5);
+}
+
+.history-panel li, .playlist-panel li, .assets-panel li {
+    padding: 5px;
+    margin-bottom: 3px;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.history-panel li:hover, .playlist-panel li:hover, .assets-panel li:hover {
+    background-color: rgba(0, 0, 0, 0.07);
+}
+
+.playlist-panel li.missing-data {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.playlist-panel li.missing-data::after {
+    content: ' (!)';
+    color: orange;
+    font-weight: bold;
+}
+
+.sortable-list li {
+    cursor: grab;
+}
+.sortable-list li:active {
+    cursor: grabbing;
+}
+/* Basic styling for placeholder drag element */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #c8ebfb;
+}
+
+/* Small screen adjustments */
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr; /* Stack main and sidebar */
+        grid-template-rows: auto auto 1fr auto auto; /* Header, controls, main, editor, sidebar */
+        grid-template-areas:
+            "header"
+            "controls"
+            "main"
+            "sidebar";
+        width: 100%;
+        min-height: 100vh;
+        padding: 5px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .sidebar {
+        max-height: none; /* Allow sidebar to grow */
+        padding-right: 0;
+        overflow-y: visible;
+    }
+
+    .lyrics-container {
+        min-height: 200px; /* Ensure lyrics area has some height */
+    }
+}
+
