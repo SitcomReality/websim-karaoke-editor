@@ -2,7 +2,7 @@
 // Handles rendering lyrics, highlighting, and scrolling the lyrics container.
 
 import { elements } from './elements.js';
-import { formatTime } from '../ui.js'; // Corrected import path via facade
+import { formatTime } from './playbackDisplay.js'; // Use the function from the correct sub-module
 
 /**
  * Renders the lyrics lines in the designated list element.
@@ -66,24 +66,36 @@ export function clearActiveLyric() {
 }
 
 /**
- * Highlights a specific lyric line based on its index.
- * @param {number|null} idx - The index of the lyric line to highlight, or null to clear.
+ * Highlights a specific lyric line based on its index by adding the 'current' class.
+ * Ensures only the specified line has the 'current' class.
+ * @param {number|null} idx - The index of the lyric line to highlight, or null to clear all highlights.
  */
 export function highlightLyric(idx) {
     if (!elements.lyricsList) return;
     const lis = elements.lyricsList.children;
     let targetLi = null;
 
+    // First, remove 'current' class from all items
     for (let i = 0; i < lis.length; i++) {
-        const elementIdx = lis[i].dataset.idx ? parseInt(lis[i].dataset.idx, 10) : -1;
-        const isCurrent = elementIdx === idx;
-        if (lis[i].classList.contains('current') !== isCurrent) {
-            lis[i].classList.toggle('current', isCurrent);
-        }
-        if (isCurrent) {
-            targetLi = lis[i];
+        // Check if it's a placeholder or missing data-idx before trying to remove class
+        if (lis[i].dataset.idx !== undefined && !lis[i].classList.contains('placeholder')) {
+            lis[i].classList.remove('current');
         }
     }
+
+    // Then, add 'current' class to the target item if idx is valid
+    if (idx !== null && idx >= 0) {
+        // Find the specific li element matching the index
+        for (let i = 0; i < lis.length; i++) {
+             const elementIdx = lis[i].dataset.idx ? parseInt(lis[i].dataset.idx, 10) : -1;
+             if (elementIdx === idx) {
+                 targetLi = lis[i];
+                 targetLi.classList.add('current');
+                 break; // Found the target, no need to check further
+             }
+        }
+    }
+
 
     // Scroll the highlighted line into view
     if (targetLi) {
@@ -157,8 +169,9 @@ function scrollLyricIntoView(li) {
  */
 function formatLineTimes(line) {
     if (!line) return '[--:--]';
-    const startStr = formatTime(line.start); // Use imported formatTime
-    const endStr = formatTime(line.end); // Use imported formatTime
+    // Use the imported formatTime function for consistency
+    const startStr = formatTime(line.start);
+    const endStr = formatTime(line.end);
 
     if (startStr !== '--:--') {
         if (endStr !== '--:--') {
@@ -167,4 +180,17 @@ function formatLineTimes(line) {
         return `[${startStr}]`; // Show only start if end is missing
     }
     return '[--:--]'; // No valid times
+}
+
+/**
+ * Formats a time value (seconds) into a MM:SS string.
+ * @param {number|null|undefined} val - Time in seconds.
+ * @returns {string} Formatted time string or "--:--" if input is invalid.
+ */
+function formatTimeLocal(val) { // Renamed to avoid conflict if imported formatTime is preferred externally
+    if (val === null || typeof val !== 'number' || isNaN(val) || val < 0) return '--:--';
+    const totalSeconds = Math.floor(val);
+    const min = Math.floor(totalSeconds / 60);
+    const sec = totalSeconds % 60;
+    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
 }
