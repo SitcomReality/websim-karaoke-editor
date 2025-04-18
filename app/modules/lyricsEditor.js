@@ -1,16 +1,18 @@
 // app/modules/lyricsEditor.js
 
-// Removed getAudioTimeCb, it's not used here
-let onTimingChangeCb;
+let onTimingChangeCb = null; // Callback to notify project controller
 let editorEnabled = false;
 let currentLineIdx = null; // Index of the line currently selected for editing
 let lyrics = []; // The lyrics array with timing
 let UI; // To update timing fields and editing state
 
 export function init(dependencies) {
-    // getAudioTimeCb = dependencies.getAudioTime; // Not needed here
-    onTimingChangeCb = dependencies.onTimingChange;
     UI = dependencies.UI; // Need UI to update fields & highlight editing line
+    // onTimingChangeCb is set via setOnTimingChangeCallback by TimingEditorController
+}
+
+export function setOnTimingChangeCallback(callback) {
+    onTimingChangeCb = callback;
 }
 
 export function parseLyrics(raw, filenameHint) {
@@ -65,7 +67,6 @@ export function parseLyrics(raw, filenameHint) {
         }
     }
 
-    // lyrics = linesArr; // Don't set global lyrics here, return it
     return linesArr;
 }
 
@@ -79,7 +80,6 @@ export function getLyrics() {
     return lyrics.map(line => ({ ...line }));
 }
 
-// Returns data for a specific line, or null if index is invalid
 export function getLineData(idx) {
     if (idx === null || idx < 0 || idx >= lyrics.length) {
         return null;
@@ -88,7 +88,6 @@ export function getLineData(idx) {
     return { ...lyrics[idx] };
 }
 
-// Finds the line that should be highlighted during *playback*
 export function findLineForTime(currentTime) {
     if (!lyrics || lyrics.length === 0) return null;
     let activeIdx = null;
@@ -147,7 +146,6 @@ export function disableEditing() {
     }
 }
 
-// Bound listener for lyric line clicks (when editor enabled)
 function onLyricClick(e) {
     if (!editorEnabled) return;
     const li = e.target.closest('li');
@@ -160,7 +158,6 @@ function onLyricClick(e) {
     }
 }
 
-// Selects a line specifically for timing editing
 function selectEditorLine(idx) {
     if (idx < 0 || idx >= lyrics.length) {
         clearEditorSelection();
@@ -170,10 +167,9 @@ function selectEditorLine(idx) {
     // Update visual styles via UI module
     UI.highlightEditingLine(idx);
     // Update the timing editor display fields
-    UI.updateTimingEditorFields(idx, lyrics[idx]);
+    UI.updateTimingEditorFields(idx, getLineData(idx)); // Use getLineData to get copy
 }
 
-// Clears the timing editor selection state
 function clearEditorSelection() {
     const previousIdx = currentLineIdx;
     currentLineIdx = null;
@@ -181,7 +177,7 @@ function clearEditorSelection() {
          UI.highlightEditingLine(null); // Use UI function to clear class
     }
     if (UI) {
-        UI.updateTimingEditorFields(null); // Clear fields
+        UI.updateTimingEditorFields(null, null); // Clear fields
     }
 }
 
@@ -197,12 +193,10 @@ export function getCurrentEditorLineIdx() {
     return currentLineIdx;
 }
 
-// Timing editing controls
-
 export function setCurrentLineStart(time) {
     if (currentLineIdx === null || !lyrics[currentLineIdx]) return false;
     const line = lyrics[currentLineIdx];
-    const nextStart = (currentLineIdx < lyrics.length - 1 && typeof lyrics[currentLineIdx + 1].start === 'number')
+    const nextStart = (currentLineIdx < lyrics.length - 1 && typeof lyrics[currentLineIdx + 1]?.start === 'number')
         ? lyrics[currentLineIdx + 1].start : Infinity; // Use Infinity if no next start
 
     let newStart = sanitizeTime(time);
@@ -222,11 +216,12 @@ export function setCurrentLineStart(time) {
     // If end doesn't exist or is now before start, set a default end (e.g., start + 1s)
     // But ensure default end doesn't exceed next line's start
     if (typeof line.end !== 'number' || line.end <= line.start) {
-        line.end = Math.min(line.start + 1.0, nextStart - 0.01);
-        // Make sure end is still greater than start after potential Math.min adjustment
-        if (line.end <= line.start) {
-            line.end = line.start + 0.01;
+        let potentialEnd = line.start + 1.0;
+        if (potentialEnd >= nextStart) {
+             potentialEnd = nextStart - 0.01;
         }
+        // Make sure end is still greater than start after potential adjustment
+        line.end = Math.max(line.start + 0.01, potentialEnd);
     }
 
     propagateTimingUpdate();
@@ -236,7 +231,7 @@ export function setCurrentLineStart(time) {
 export function setCurrentLineEnd(time) {
     if (currentLineIdx === null || !lyrics[currentLineIdx]) return false;
     const line = lyrics[currentLineIdx];
-    const nextStart = (currentLineIdx < lyrics.length - 1 && typeof lyrics[currentLineIdx + 1].start === 'number')
+    const nextStart = (currentLineIdx < lyrics.length - 1 && typeof lyrics[currentLineIdx + 1]?.start === 'number')
         ? lyrics[currentLineIdx + 1].start : Infinity;
 
     let newEnd = sanitizeTime(time);
@@ -244,14 +239,9 @@ export function setCurrentLineEnd(time) {
 
     // Ensure start time exists before setting end time
     if (typeof line.start !== 'number') {
-        // Maybe set start to 0 or prompt user? For now, do nothing.
-        console.warn("Cannot set end time when start time is not set.");
-        // Or maybe set start = newEnd - 1.0?
-        // line.start = Math.max(0, newEnd - 1.0);
-        // propagateTimingUpdate(); // Need to update start first
-        // return;
-        // Alternative: Set start time to 0 if not set
+        // If start doesn't exist, set it to 0 when setting end time
         line.start = 0;
+        console.warn("Start time was not set. Setting to 0.");
     }
 
     // Constraint: End time must be after start time
@@ -270,21 +260,10 @@ export function setCurrentLineEnd(time) {
 
     line.end = newEnd;
 
-    // Optional: Auto-set start of next line? (Original code had this, but can be disruptive)
-    // if (currentLineIdx < lyrics.length - 1) {
-    //     if (lyrics[currentLineIdx + 1].start === null || lyrics[currentLineIdx + 1].start < newEnd) {
-    //         lyrics[currentLineIdx + 1].start = newEnd;
-    //     }
-    // }
-
     propagateTimingUpdate();
     return true; // Return true upon success
 }
 
-/**
- * Set both start and end times for a specific lyric line.
- * Constrain to avoid overlap with next line.
- */
 export function setLineTimes(idx, start, end) {
     if (idx < 0 || idx >= lyrics.length || !lyrics[idx]) return false;
     const line = lyrics[idx];
@@ -408,7 +387,6 @@ export function clearCurrentLineTimes() {
     return true; // Return true upon success
 }
 
-// For displaying time in min:sec format
 export function formatTime(val) {
     if (val == null || isNaN(val)) return '--:--';
     const min = Math.floor(val / 60);
@@ -416,12 +394,15 @@ export function formatTime(val) {
     return `${min}:${sec < 10 ? '0' : ''}${sec}`;
 }
 
-// Timing change notification for storage/UI
 function propagateTimingUpdate() {
-    // Save/notify as appropriate
-    if (onTimingChangeCb) onTimingChangeCb(lyrics.slice());
-    // Also update the time fields for the currently selected line
-    UI.updateTimingEditorFields(currentLineIdx, lyrics[currentLineIdx]);
+    // Notify project controller of the change
+    if (onTimingChangeCb) {
+        onTimingChangeCb(getLyrics()); // Pass a copy of the updated lyrics
+    }
+    // Also update the time fields display *in the editor panel* for the currently selected line
+    if (UI) {
+         UI.updateTimingEditorFields(currentLineIdx, getLineData(currentLineIdx));
+    }
 }
 
 function sanitizeTime(val) {

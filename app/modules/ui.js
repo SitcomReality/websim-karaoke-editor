@@ -91,7 +91,6 @@ export function displayLyrics(lyrics, showTimes, onTimeFieldClick) {
             timeSpan.textContent = formatLineTimes(line);
 
             if (typeof onTimeFieldClick === 'function') {
-                timeSpan.style.cursor = 'pointer';
                 timeSpan.title = 'Click to edit timing';
                 timeSpan.addEventListener('click', (evt) => {
                     evt.stopPropagation();
@@ -108,6 +107,10 @@ export function displayLyrics(lyrics, showTimes, onTimeFieldClick) {
         li.appendChild(textSpan);
         ul.appendChild(li);
     });
+
+    // Re-apply editing highlight if needed (e.g., after redraw)
+    // Find the currently edited line index from LyricsEditor (need access or state)
+    // For now, let's assume highlightEditingLine will be called separately when needed.
 }
 
 export function displaySongImage(url) {
@@ -144,8 +147,21 @@ export function highlightLyric(idx) {
 
 export function highlightEditingLine(idx) {
     Array.from(elements.lyricsList.children).forEach((li, i) => {
-        li.classList.toggle('editing', i === idx);
+        const elementIdx = li.dataset.idx ? parseInt(li.dataset.idx, 10) : -1;
+        li.classList.toggle('editing', elementIdx === idx);
     });
+
+    if (idx !== null && elements.lyricsContainer) {
+        const lineElement = elements.lyricsList.querySelector(`li[data-idx="${idx}"]`);
+        if (lineElement) {
+            const containerRect = elements.lyricsContainer.getBoundingClientRect();
+            const lineRect = lineElement.getBoundingClientRect();
+
+            if (lineRect.bottom < containerRect.top + (containerRect.height * 0.1) || lineRect.top > containerRect.bottom - (containerRect.height * 0.1)) {
+                lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
 }
 
 export function resetProgressBar() {
@@ -172,14 +188,24 @@ export function updateProgressBar(currentTime = 0, duration = 0) {
 export function updateTimingEditorFields(idx, lineData) {
     const startLabel = elements.selectedLineStartLabel;
     const endLabel = elements.selectedLineEndLabel;
+    const hasData = idx !== null && lineData;
 
-    if (idx === null || !lineData || !startLabel || !endLabel) {
-        startLabel.textContent = '--:--';
-        endLabel.textContent = '--:--';
-    } else {
-        startLabel.textContent = formatTime(lineData.start);
-        endLabel.textContent = formatTime(lineData.end);
+    if (startLabel) {
+        startLabel.textContent = hasData ? formatTime(lineData.start) : '--:--';
     }
+    if (endLabel) {
+        endLabel.textContent = hasData ? formatTime(lineData.end) : '--:--';
+    }
+
+    const editorButtons = [
+        elements.setLineStartButton, elements.setLineEndButton,
+        elements.nudgeStartBackButton, elements.nudgeStartForwardButton,
+        elements.nudgeEndBackButton, elements.nudgeEndForwardButton,
+        elements.clearLineTimesButton
+    ];
+    editorButtons.forEach(btn => {
+        if (btn) btn.disabled = !hasData;
+    });
 }
 
 export function formatTime(val) {
@@ -197,7 +223,7 @@ function formatLineTimes(line) {
 
     if (startStr !== '--:--') {
         if (endStr !== '--:--') {
-            return `[${startStr} – ${endStr}]`;
+            return `[${startStr} - ${endStr}]`;
         }
         return `[${startStr}]`;
     }

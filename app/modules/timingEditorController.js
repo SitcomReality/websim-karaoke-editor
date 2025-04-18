@@ -13,6 +13,8 @@ export function init(dependencies) {
     UI = dependencies.UI;
     PlaybackController = dependencies.PlaybackController;
     ProjectController = dependencies.ProjectController;
+    // The onLyricsChangedCallback IS ProjectController.updateCurrentProjectLyrics
+    // It's used by LyricsEditor to update the central project data.
     onLyricsChangedCallback = dependencies.onLyricsChanged;
 
     const autoSelectCheckbox = document.getElementById('auto-select-next-line');
@@ -22,6 +24,9 @@ export function init(dependencies) {
              onAutoSelectNextChange(event);
         });
     }
+
+    // Pass the callback to LyricsEditor so it can notify ProjectController
+    LyricsEditor.setOnTimingChangeCallback(onLyricsChangedCallback);
 }
 
 export function isEditorVisible() {
@@ -73,44 +78,50 @@ function syncLyricsDisplay() {
      UI.highlightLyric(currentPlayIdx);
 }
 
-
 export function onSetLineStart() {
     const currentTime = PlaybackController.getAudioTime();
-    LyricsEditor.setCurrentLineStart(currentTime);
-    UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
+    if (LyricsEditor.setCurrentLineStart(currentTime)) {
+        syncLyricsDisplay(); // Refresh list view with updated times
+        UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
+    }
 }
 
 export function onSetLineEnd() {
     const currentTime = PlaybackController.getAudioTime();
-    LyricsEditor.setCurrentLineEnd(currentTime);
-    UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
+    if (LyricsEditor.setCurrentLineEnd(currentTime)) {
+        syncLyricsDisplay(); // Refresh list view with updated times
+        UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
 
-
-    if (autoSelectNextLine) {
-        const idx = LyricsEditor.getCurrentEditorLineIdx();
-        const lyrics = LyricsEditor.getLyrics();
-        if (typeof idx === 'number' && idx < lyrics.length - 1) {
-            LyricsEditor.updateEditorTarget(idx + 1);
-            UI.highlightEditingLine(idx + 1);
-            UI.updateTimingEditorFields(idx + 1, LyricsEditor.getLineData(idx + 1));
+        if (autoSelectNextLine) {
+            const idx = LyricsEditor.getCurrentEditorLineIdx();
+            const lyrics = LyricsEditor.getLyrics();
+            if (typeof idx === 'number' && idx < lyrics.length - 1) {
+                 // Update target triggers UI updates (highlighting, editor fields)
+                 LyricsEditor.updateEditorTarget(idx + 1);
+            }
         }
     }
 }
 
 export function onNudgeStart(delta) {
-    LyricsEditor.nudgeCurrentLineStart(delta);
-    UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
+    if (LyricsEditor.nudgeCurrentLineStart(delta)) {
+        syncLyricsDisplay(); // Refresh list view with updated times
+        UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
+    }
 }
 
 export function onNudgeEnd(delta) {
-    LyricsEditor.nudgeCurrentLineEnd(delta);
-    UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
+    if (LyricsEditor.nudgeCurrentLineEnd(delta)) {
+        syncLyricsDisplay(); // Refresh list view with updated times
+        UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
+    }
 }
 
 export function onClearLineTimes() {
-    LyricsEditor.clearCurrentLineTimes();
-    UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
-
+    if (LyricsEditor.clearCurrentLineTimes()) {
+        syncLyricsDisplay(); // Refresh list view with updated times
+        UI.updateTimingEditorFields(LyricsEditor.getCurrentEditorLineIdx(), LyricsEditor.getLineData(LyricsEditor.getCurrentEditorLineIdx()));
+    }
 }
 
 export function onAutoSelectNextChange(event) {
@@ -119,28 +130,30 @@ export function onAutoSelectNextChange(event) {
 
 export function onLyricTimeFieldClick(evt) {
     const li = evt.target.closest('li[data-idx]');
-    if (!li) return;
+    if (!li || !isEditing) return; // Check if editing is enabled
     const idx = parseInt(li.dataset.idx, 10);
-    const line = LyricsEditor.getLineData(idx); 
+    const line = LyricsEditor.getLineData(idx);
 
     if (line) {
+        // Select the line for editing first, this updates the editor panel display
         LyricsEditor.updateEditorTarget(idx);
 
         const currentStart = typeof line.start === 'number' ? line.start.toFixed(2) : '';
         const currentEnd = typeof line.end === 'number' ? line.end.toFixed(2) : '';
 
         const newStartStr = prompt(`Enter start time (seconds) for line ${idx + 1}:\n"${line.text}"`, currentStart);
-        if (newStartStr === null) return; 
+        if (newStartStr === null) return; // User cancelled start input
 
         const newEndStr = prompt(`Enter end time (seconds) for line ${idx + 1}:\n"${line.text}"`, currentEnd);
-        if (newEndStr === null) return; 
+        if (newEndStr === null) return; // User cancelled end input
 
+        // Set times via LyricsEditor, which handles validation and propagation
         LyricsEditor.setLineTimes(idx, newStartStr, newEndStr);
 
-        if (onLyricsChangedCallback) {
-            onLyricsChangedCallback(LyricsEditor.getLyrics());
-        }
+        // Refresh the list display and the timing editor display
+        // Note: setLineTimes calls propagateTimingUpdate which calls UI.updateTimingEditorFields
+        // So we only need to explicitly refresh the main list display here.
         syncLyricsDisplay();
-        UI.updateTimingEditorFields(idx, LyricsEditor.getLineData(idx));
+        // UI.updateTimingEditorFields(idx, LyricsEditor.getLineData(idx)); // This is redundant now
     }
 }

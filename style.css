@@ -19,6 +19,8 @@
     --sidebar-width: 350px;
     --container-padding: 15px;
     --container-gap: 15px;
+    --controls-height: 90px; /* Approximate height of footer controls */
+    --header-min-height: 100px; /* Approximate height of header */
 }
 
 body {
@@ -30,7 +32,7 @@ body {
     padding-top: var(--container-padding); 
     padding-left: var(--container-padding); 
     padding-right: var(--container-padding); 
-    padding-bottom: 120px; 
+    padding-bottom: calc(var(--controls-height) + 150px); 
     box-sizing: border-box;
     overflow-x: hidden; 
     position: relative; 
@@ -102,7 +104,7 @@ body {
     align-items: center;
     justify-content: center; 
     gap: 15px;
-    min-height: 80px; 
+    min-height: var(--header-min-height); 
     overflow: hidden; 
 }
 
@@ -135,20 +137,27 @@ body {
     grid-area: main;
     display: flex;
     flex-direction: column;
-    overflow: hidden; 
-    padding-bottom: 15px; 
-    transition: padding-bottom 0.3s ease; 
+    overflow: hidden; /* Changed from hidden to allow child scrolling */
+    padding-bottom: 15px;
+    transition: padding-bottom 0.3s ease;
+    /* Ensure main content can shrink if needed, but also grow */
+    min-height: 0; /* Important for flex item children with overflow */
 }
 
 .lyrics-container {
-    flex-grow: 1;
-    overflow-y: auto; 
+    flex-grow: 1; /* Allow it to take up available space */
+    overflow-y: auto; /* Enable vertical scrolling within this container */
     padding: 15px;
     background-color: rgba(255, 255, 255, 0.8); 
     border-radius: 5px;
     scroll-behavior: smooth; 
     border: 1px solid var(--panel-border-color);
-    min-height: 300px; 
+    /* Remove fixed min-height, let flexbox handle it */
+    /* min-height: 300px; */
+    /* Add max-height relative to viewport minus other elements */
+    max-height: calc(100vh - var(--header-min-height) - var(--controls-height) - 2 * var(--container-gap) - 2 * var(--container-padding));
+    /* Add a fallback min-height for very small viewports or when editor is open */
+    min-height: 200px;
 }
 
 #lyrics-list {
@@ -200,8 +209,8 @@ body {
 
 #lyrics-list li .lyric-time-field {
     display: inline-block;
-    min-width: 76px;
-    max-width: 90px;
+    min-width: 76px; /* Adjust as needed */
+    max-width: 90px; /* Adjust as needed */
     text-align: right;
     font-family: monospace;
     font-size: 1em;
@@ -209,13 +218,15 @@ body {
     opacity: 0.85;
     margin-right: 10px;
     flex-shrink: 0;
-    white-space: pre;
+    white-space: pre; /* Keep whitespace formatting */
+    cursor: pointer; /* Add cursor pointer */
+    user-select: none; /* Prevent text selection */
 }
 #lyrics-list li .lyric-line-text {
     flex-grow: 1;
     text-align: left;
-    display: inline-block;
-    pointer-events: none;
+    display: inline-block; /* Keep as inline-block */
+    pointer-events: none; /* Re-apply pointer-events none */
 }
 
 .controls-container {
@@ -495,42 +506,68 @@ button:active {
         padding-top: 5px;
     }
     .container {
-        grid-template-columns: 1fr; 
-        grid-template-rows: auto 1fr auto; 
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr auto; /* Adjust rows for header, main, sidebar, controls */
         grid-template-areas:
             "header"
             "main"
-            "sidebar";
+            "sidebar"; /* Controls are fixed at bottom */
         gap: 10px;
         padding: 0; 
         border-radius: 0;
         box-shadow: none;
         margin: 0;
+        /* Ensure container takes full height */
+        min-height: calc(100vh - 100px); /* Adjust for controls height */
     }
 
-    .sidebar {
-        max-height: none; 
-        padding-right: 0;
-        overflow-y: visible; 
+    .main-content {
+         /* Allow main content (lyrics) to scroll if needed, even on small screens */
+         min-height: 150px; /* Ensure it doesn't collapse too much */
     }
 
     .lyrics-container {
-        min-height: 200px; 
+        /* Adjust max-height for smaller screens */
+        max-height: 50vh; /* Example: limit to half the viewport height */
+        min-height: 150px; /* Reduce min-height slightly */
+    }
+
+    .sidebar {
+        max-height: none;
+        padding-right: 0;
+        overflow-y: visible;
     }
 
      .main-header {
         border-radius: 0;
+        min-height: 60px; /* Reduce header height */
      }
+     #song-image-container {
+         max-height: 50px;
+     }
+     #song-title {
+         font-size: 1.2em;
+     }
+
 
      .controls-container, .timing-editor {
         left: 0;
         width: 100%;
         max-width: none;
-        border-radius: 0; 
+        border-radius: 0;
+        position: fixed; /* Ensure they remain fixed */
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .controls-container {
+        bottom: 0;
+        z-index: 100; /* Keep controls above timing editor */
     }
 
     .timing-editor {
-         bottom: 100px; 
+         bottom: var(--controls-height); /* Position above controls */
          border-radius: 0;
+         border-bottom: 1px solid var(--panel-border-color); /* Add border back */
+         z-index: 99;
     }
 }
