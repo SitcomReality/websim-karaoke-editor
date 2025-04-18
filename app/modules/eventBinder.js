@@ -84,25 +84,24 @@ function bindEvents() {
             highlightBg: colorHighlightBg.value,
             highlightText: colorHighlightText.value,
         };
-        ProjectController.applyAndSaveTheme(theme); // Use ProjectController to manage theme state
+        // applyAndSaveTheme handles applying, saving, AND updating inputs via Customization.applyTheme
+        ProjectController.applyAndSaveTheme(theme);
     });
     extractColorsBtn.addEventListener('click', () => {
         const project = ProjectController.getCurrentProject();
         const imageAsset = project?.assets?.image ? ProjectController.findAssetById(project.assets.image) : null;
         if (imageAsset?.url) {
+            // Customization.extractAndApplyColors now uses the callback (applyThemeCb)
+            // which calls ProjectController.applyAndSaveTheme, ensuring inputs are updated.
             Customization.extractAndApplyColors(imageAsset.url, true); // Auto-apply extracted colors
         } else {
             alert("Load an image first to extract colors.");
         }
     });
     resetThemeBtn.addEventListener('click', () => {
-         const defaultTheme = Customization.getDefaultTheme();
-         ProjectController.applyAndSaveTheme(defaultTheme); // Apply and save default
-         // Also reset color input UI elements
-         colorBg.value = defaultTheme.background;
-         colorText.value = defaultTheme.text;
-         colorHighlightBg.value = defaultTheme.highlightBg;
-         colorHighlightText.value = defaultTheme.highlightText;
+         // Customization.resetThemeToDefault now uses the callback (applyThemeCb)
+         // which calls ProjectController.applyAndSaveTheme, ensuring inputs are updated.
+         Customization.resetThemeToDefault();
     });
     // Add font loading logic if needed
 

@@ -180,10 +180,13 @@ export function updateCurrentProjectLyrics(lyricsArray) {
 
 // Called by Customization module or UI events
 export function applyAndSaveTheme(theme) {
-    Customization.applyTheme(theme); // Apply visually
+    // Apply visually AND update UI inputs via Customization module
+    Customization.applyTheme(theme);
+    // Save theme to current project and global storage
     if (currentProject) {
         currentProject.theme = theme;
-        Storage.saveTheme(theme); // Save theme globally (optional: could save per-project)
-        // May need to trigger project save if theme changes should persist with the project explicitly
+        // Optionally trigger auto-save or mark project as dirty
     }
+    // Save the theme globally for persistence across sessions/projects
+    Storage.saveTheme(theme);
 }

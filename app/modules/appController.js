@@ -32,6 +32,8 @@ window.KaraokeEditor = {
     TimingEditorController,
     LyricsEditor,
     get currentProject() { return ProjectController.getCurrentProject(); },
+    // Expose applyAndSaveTheme for debugging theme application
+    applyAndSaveTheme: ProjectController.applyAndSaveTheme,
 };
 
 //== Initialize the app ===
@@ -73,8 +75,11 @@ export function initApp() {
         onLyricsChanged: ProjectController.updateCurrentProjectLyrics
     });
 
-    // Initialize Customization (needs project controller to apply/save theme)
-    Customization.init(ProjectController.applyAndSaveTheme);
+    // Initialize Customization (needs project controller to apply/save theme AND UI to update inputs)
+    Customization.init({
+        applyThemeCb: ProjectController.applyAndSaveTheme,
+        UI: UI // Pass UI module
+    });
 
     // Bind all UI events
     EventBinder.init({
@@ -93,10 +98,10 @@ export function initApp() {
     AssetManager.loadSessionAssets();
     PlaylistManager.loadCurrentPlaylist();
     const savedTheme = Storage.loadTheme();
+    // Apply theme AND update inputs
     Customization.applyTheme(savedTheme || Customization.getDefaultTheme());
-    if (savedTheme) {
-        UI.updateThemeInputs(savedTheme);
-    }
+    // No need to call UI.updateThemeInputs here, applyTheme handles it
+
 
     // Initial UI setup
     PlaybackController.resetUI();
