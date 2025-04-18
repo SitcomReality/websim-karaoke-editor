@@ -1,0 +1,54 @@
+button {
+    padding: 8px 17px;
+    background: var(--button-bg-color); 
+    color: var(--button-text-color); 
+    border: 1px solid var(--panel-border-color); 
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background .17s;
+    margin: 5px 6px 5px 0;
+    font-size: 1em;
+}
+button:hover {
+    background: var(--button-hover-bg-color); 
+}
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.delete-btn {
+    background-color: var(--error-color);
+    color: white;
+    border-color: color-mix(in srgb, var(--error-color) 80%, black); 
+}
+.delete-btn:hover {
+    background-color: color-mix(in srgb, var(--error-color) 90%, black); 
+}
+
+
+/* Sidebar Toggle Button */
+#toggle-sidebar {
+    position: absolute;
+    top: 16px;
+    right: -19px;
+    z-index: 88;
+    background: var(--button-bg-color); 
+    color: var(--button-text-color); 
+    border: 1px solid var(--panel-border-color); 
+    border-radius: 50%;
+    padding: 2px;
+    width: 38px;
+    height: 38px;
+    box-shadow: 0 3px 11px rgba(50,50,68,0.05);
+    transition: background .14s, right .25s;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#toggle-sidebar:hover {
+    background: var(--button-hover-bg-color); 
+}
+.sidebar-collapsible.collapsed #toggle-sidebar {
+    right: -15px;
+}

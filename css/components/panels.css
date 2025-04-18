@@ -1,0 +1,60 @@
+.sidebar-collapsible .panel {
+    background: var(--panel-bg-color); /* Use theme panel background */
+    color: var(--text-color); /* Use theme text color */
+    border: 1px solid var(--panel-border-color); /* Use theme border */
+    border-radius: 7px;
+    box-shadow: 0 1.5px 10px rgba(40,40,48,0.04);
+    margin-bottom: 18px;
+    padding: 13px 14px;
+}
+
+.panel h3, .panel h4 {
+    margin-top: 0;
+    margin-bottom: 7px;
+    border-bottom: 1px solid var(--panel-border-color); /* Use theme border */
+    padding-bottom: 3px;
+    color: var(--text-color); /* Ensure headings use theme text color */
+}
+
+.panel label {
+    display: block;
+    margin-top: 7px;
+    margin-bottom: 2px;
+    font-size: 0.91em;
+    font-weight: bold;
+    color: var(--text-color); /* Theme text color */
+}
+.panel input[type="file"],
+.panel input[type="text"],
+.panel select {
+    display: block;
+    width: 100%;
+    padding: 5.5px 7px;
+    margin-bottom: 7px;
+    background-color: var(--input-bg-color); /* Theme input background */
+    color: var(--text-color); /* Theme text color */
+    border: 1px solid var(--input-border-color); /* Theme input border */
+    border-radius: 3px;
+    box-sizing: border-box; /* Ensure padding doesn't make it wider */
+}
+.panel input::placeholder {
+    color: var(--placeholder-text-color); /* Theme placeholder text */
+    opacity: 1;
+}
+.panel input[type="color"] {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--input-border-color); /* Theme input border */
+    vertical-align: middle;
+    margin: 0 7px 6px 0;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.color-palette {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+    align-items: center;
+}

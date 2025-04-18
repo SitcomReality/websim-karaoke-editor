@@ -1,0 +1,42 @@
+:root {
+    /* Theme Colors (Primary) */
+    --background-color: #f0f0f0;
+    --text-color: #282828;
+    --highlight-bg-color: #fff685;
+    --highlight-text-color: #000000;
+    --primary-color: #2980d9; /* Used for accents like progress bar */
+
+    /* Derived/Secondary Theme Colors (set based on primary) */
+    --panel-bg-color: #ededed;
+    --panel-border-color: #d6d6d6;
+    --button-bg-color: #e0e0e0; /* Slightly darker than panel */
+    --button-hover-bg-color: #d0d0d0;
+    --button-text-color: var(--text-color);
+    --header-bg-color: var(--panel-bg-color);
+    --footer-bg-color: var(--panel-bg-color);
+    --sidebar-bg-color: var(--panel-bg-color);
+    --lyrics-container-bg: rgba(255, 255, 255, 0.85); /* Keep lyrics area light by default */
+    --lyrics-frame-bg: #ffffff; /* Frame around lyrics */
+    --input-bg-color: #ffffff;
+    --input-border-color: #bbb;
+    --placeholder-text-color: #999;
+    --link-color: var(--primary-color);
+
+    /* Layout */
+    --shadow: 0 2px 24px rgba(40, 40, 50, 0.10); /* Keep shadow subtle */
+    --font-family: 'Arial', 'Segoe UI', Verdana, sans-serif;
+    --sidebar-width: 340px;
+    --sidebar-collapsed-width: 58px;
+    --footer-controls-height: 92px;
+    --footer-timing-editor-height: 170px;
+    --footer-progressbar-height: 38px;
+    --header-min-height: 104px;
+    --lyrics-frame-max-width: 700px;
+    --lyrics-font-size: 1.35em;
+    --lyrics-highlight-scale: 1.06;
+    --lyric-ul-padding: 30px;
+
+    /* Info/Error Colors */
+    --info-color: #5bc0de;
+    --error-color: #d9534f;
+}

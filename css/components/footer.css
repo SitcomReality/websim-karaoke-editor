@@ -1,0 +1,108 @@
+.footer-timing-editor {
+    width: 100vw;
+    background: var(--footer-bg-color); /* Use theme footer background */
+    color: var(--text-color); /* Theme text color */
+    border-top: 1.5px solid var(--panel-border-color); /* Theme border */
+    border-radius: 0;
+    box-shadow: 0 -0.5px 3px rgba(234, 234, 234, 0.5);
+    padding: 7px 9vw 5px 36vw;
+    z-index: 575;
+    min-height: var(--footer-timing-editor-height);
+    transition: padding .22s, background .2s, color .2s;
+    box-sizing: border-box;
+}
+.footer-timing-editor p, .footer-timing-editor label {
+    color: inherit; /* Inherit text color */
+}
+@media (max-width: 900px) {
+    .footer-timing-editor {
+        padding: 7px 2vw 5px 2vw;
+    }
+}
+
+.footer-controls-outer {
+    width: 100vw;
+    background: var(--footer-bg-color); /* Use theme footer background */
+    color: var(--text-color); /* Theme text color */
+    border-radius: 0;
+    padding: 0 2vw 8px 2vw;
+    border-top: 1px solid var(--panel-border-color); /* Theme border */
+    box-shadow: 0 -3px 19px -9px rgba(170, 170, 170, 0.56);
+    z-index: 580;
+    transition: background .2s, color .2s;
+    box-sizing: border-box;
+}
+.footer-controls-outer span {
+    color: inherit; /* Inherit text color */
+}
+
+.footer-controls-outer .playback-controls,
+.footer-controls-outer .progress-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 17px;
+}
+
+.footer-controls-outer .playback-controls {
+    padding: 9px 0 3px 0;
+}
+.footer-controls-outer .footer-nav-btn {
+    font-size: 1.13em;
+    border-radius: 50%;
+    padding: 6px 11px;
+    background: var(--button-bg-color); /* Use theme button background */
+    color: var(--button-text-color); /* Theme button text */
+    border: 1px solid var(--panel-border-color); /* Theme border */
+    transition: background .15s;
+    min-width: 42px;
+    min-height: 42px;
+}
+.footer-controls-outer .footer-nav-btn:hover {
+    background: var(--button-hover-bg-color); /* Theme hover background */
+}
+.footer-controls-outer .footer-slider {
+    width: 80px;
+    max-width: 130px;
+    accent-color: var(--primary-color); /* Use primary accent color */
+    cursor: pointer;
+}
+.footer-volume-ico {
+    margin-left: 2px;
+    font-size: 1.27em;
+    opacity: 0.8;
+    color: inherit; /* Inherit theme text color */
+}
+.footer-controls-outer .progress-controls {
+    margin-top: 4px;
+    gap: 12px;
+}
+.footer-progress-bar {
+    width: clamp(160px, 48vw, 585px);
+    margin: 0 2px;
+    accent-color: var(--primary-color); /* Use primary accent color */
+    cursor: pointer;
+}
+
+/* Timing Editor Buttons */
+.timing-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 7px;
+    margin-bottom: 7px;
+}
+.timing-buttons button {
+    font-size: 0.96em;
+    padding: 6px 12px;
+    border-radius: 5px;
+    margin: 3px 0;
+    background: var(--button-bg-color); /* Theme button */
+    color: var(--button-text-color);
+    border-color: var(--panel-border-color);
+}
+.timing-buttons button:hover {
+    background: var(--button-hover-bg-color); /* Theme button hover */
+}
+.timing-buttons button:active {
+    background: color-mix(in srgb, var(--primary-color) 20%, var(--button-hover-bg-color)); /* Mix primary color on active */
+}

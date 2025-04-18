@@ -1,0 +1,147 @@
+.lyrics-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    padding: 22px 0 0 0;
+}
+
+.lyrics-display-frame {
+    width: 97%;
+    max-width: var(--lyrics-frame-max-width);
+    background: var(--lyrics-frame-bg); /* Use theme frame background */
+    color: var(--text-color); /* Use theme text color */
+    box-shadow: 0 7px 42px -16px rgba(0, 0, 0, 0.10), 0 2.5px 10px -8px var(--panel-border-color);
+    padding: 0 0 var(--lyric-ul-padding) 0;
+    min-height: 350px;
+    border-radius: 16px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+}
+
+.lyrics-container {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2px 22px 6px 22px;
+    margin: 18px auto 0 auto;
+    width: 98%;
+    max-width: 900px;
+    background: var(--lyrics-container-bg); /* Use theme lyrics container background */
+    color: var(--text-color); /* Theme text color */
+    border-radius: 13px;
+    min-height: 220px;
+    min-width: 0;
+    box-shadow: 0 2.5px 18px -11px rgba(176, 176, 187, 0.07);
+    scrollbar-gutter: stable both-edges;
+    transition: box-shadow 0.20s, background .2s, color .2s;
+    position: relative;
+    z-index: 10;
+    will-change: height;
+    box-sizing: border-box;
+}
+
+#lyrics-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+    font-size: var(--lyrics-font-size);
+    font-family: inherit;
+    letter-spacing: 0;
+    line-height: 1.38;
+    min-width: 0;
+}
+
+#lyrics-list li {
+    padding: 8px 16px;
+    margin-bottom: 7px;
+    border-radius: 7px;
+    cursor: default;
+    font-size: 1.11em;
+    opacity: 0.83;
+    transition: background .19s, color .19s, transform .19s, opacity .19s;
+    border: 1px solid transparent;
+    user-select: none;
+    color: inherit; /* Inherit text color from container */
+}
+
+#lyrics-list li:not(.placeholder)):hover {
+     background: rgba(0, 0, 0, 0.05); /* Subtle hover based on background */
+     border-color: rgba(0, 0, 0, 0.1);
+     opacity: 1;
+}
+#lyrics-list li.current {
+    background: var(--highlight-bg-color);
+    color: var(--highlight-text-color);
+    font-weight: bold;
+    transform: scale(var(--lyrics-highlight-scale));
+    opacity: 1.0;
+    border: 1.5px solid var(--primary-color));
+    z-index: 5;
+}
+#lyrics-list li.editing {
+    border: 2.5px solid var(--info-color));
+    background: color-mix(in srgb, var(--info-color) 20%, var(--lyrics-container-bg))); /* Mix info color with bg */
+    opacity: 1.0;
+}
+#lyrics-list.show-times li {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 0.5em;
+}
+#lyrics-list li .lyric-time-field {
+    display: inline-block;
+    min-width: 84px;
+    max-width: 120px;
+    text-align: right;
+    font-family: monospace;
+    font-size: 1em;
+    color: color-mix(in srgb, var(--text-color) 70%, transparent)); /* Muted text color */
+    opacity: 0.85;
+    margin-right: 13px;
+    flex-shrink: 0;
+    white-space: pre;
+    cursor: pointer;
+    border-radius: 2.5px;
+    padding: 2px 4px 2px 0;
+    user-select: none;
+    background: color-mix(in srgb, var(--panel-bg-color) 80%, transparent)); /* Subtle background */
+    border: 1px solid var(--panel-border-color));
+    transition: background .15s;
+}
+#lyrics-list li .lyric-time-field:hover {
+    background: color-mix(in srgb, var(--info-color) 15%, var(--panel-bg-color))); /* Info hint on hover */
+}
+#lyrics-list li .lyric-line-text {
+    flex-grow: 1;
+    text-align: left;
+    display: inline;
+    pointer-events: auto;
+    font-family: inherit;
+    font-size: 1em;
+    margin: 0;
+    color: inherit; /* Inherit from li */
+}
+
+@media (max-width: 750px) {
+    .lyrics-center {
+        padding: 8px 0 0 0;
+    }
+    .lyrics-display-frame {
+        padding: 0 0 14px 0;
+    }
+    .lyrics-container {
+        padding: 1px 5vw 5px 5vw;
+    }
+    #lyrics-list li {
+        font-size: 1em;
+    }
+}

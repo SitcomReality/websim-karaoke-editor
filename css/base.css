@@ -1,0 +1,22 @@
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 0;
+    background: var(--background-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    min-width: 0;
+}
+
+/* Implicitly used by several components */
+.placeholder {
+    color: var(--placeholder-text-color); /* Use theme placeholder color */
+    font-style: italic;
+    text-align: center;
+    cursor: default;
+    background: transparent !important;
+    opacity: 1.0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+

@@ -1,0 +1,31 @@
+/* History, Playlist, Asset Lists Specific */
+.history-panel ul, .playlist-panel ul, .assets-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 5px 0;
+    max-height: 200px; /* Limit height */
+    overflow-y: auto;
+    border: 1px solid var(--panel-border-color);
+    border-radius: 4px;
+    background: var(--input-bg-color); /* Match input background */
+}
+.history-panel li, .playlist-panel li, .assets-panel li {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--panel-border-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color); /* Theme text color */
+}
+.history-panel li:last-child, .playlist-panel li:last-child, .assets-panel li:last-child {
+    border-bottom: none;
+}
+.history-panel li:hover, .playlist-panel li:hover, .assets-panel li:hover {
+    background: var(--button-hover-bg-color); /* Use theme hover */
+}
+.history-panel li .delete-history-btn {
+    margin-left: 10px;
+    padding: 2px 6px;
+    font-size: 0.8em;
+}
