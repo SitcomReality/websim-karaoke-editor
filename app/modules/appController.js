@@ -10,11 +10,28 @@ import * as ProjectManager from './projectManager.js';
 import * as PlaylistManager from './playlistManager.js';
 import * as AssetManager from './assetManager.js';
 
-
 // --- Global State ---
 let currentProject = null;
 let isEditing = false;
+let duration = 0;
+let lyricsArray = [];
+let ignoreProgressBarUpdate = false;
 
+// --- Export specifically for debugging
+window.KaraokeEditor = {
+    UI,
+    AudioHandler,
+    LyricsEditor,
+    Storage,
+    Customization,
+    ImportExport,
+    ProjectManager,
+    PlaylistManager,
+    AssetManager,
+    get currentProject() { return currentProject; },
+};
+
+//== Initialize the app ===
 export function initApp() {
     // Initialize modules and UI event listeners
     UI.init();
@@ -33,19 +50,8 @@ export function initApp() {
     PlaylistManager.loadCurrentPlaylist();
     Customization.applyTheme(Storage.loadTheme() || Customization.getDefaultTheme());
 
-    // Expose for debugging (optional)
-    window.KaraokeEditor = {
-        UI,
-        AudioHandler,
-        LyricsEditor,
-        Storage,
-        Customization,
-        ImportExport,
-        ProjectManager,
-        PlaylistManager,
-        AssetManager,
-        get currentProject() { return currentProject; },
-    };
+    // Show default song duration/progress
+    UI.resetProgressBar();
 }
 
 // --- Event Registration ---
@@ -76,6 +82,66 @@ function setupCoreEventListeners() {
                 ProjectManager.deleteProjectFromHistory(e.target.dataset.projectId);
             }
         }
+    });
+
+    // Playback UI events
+    UI.elements.playPauseButton.addEventListener('click', onPlayPauseClicked);
+    UI.elements.prevSongButton.addEventListener('click', onPrevSongClicked);
+    UI.elements.nextSongButton.addEventListener('click', onNextSongClicked);
+    UI.elements.volumeSlider.addEventListener('input', (e) => {
+        AudioHandler.setVolume(e.target.value);
+    });
+
+    // Seek bar
+    UI.elements.progressBar.addEventListener('input', (e) => {
+        if (duration > 0) {
+            ignoreProgressBarUpdate = true;
+            const seekTime = parseFloat(e.target.value);
+            AudioHandler.seek(seekTime);
+            onAudioTimeUpdate(seekTime, duration);
+            setTimeout(() => {
+                ignoreProgressBarUpdate = false;
+            }, 100); // ignore updates momentarily
+        }
+    });
+
+    // Timing editor controls
+    UI.elements.setLineStartButton.addEventListener('click', () => {
+        const ct = getAudioTime();
+        LyricsEditor.setCurrentLineStart(ct);
+        UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
+        refreshLyricsToProject();
+    });
+    UI.elements.setLineEndButton.addEventListener('click', () => {
+        const ct = getAudioTime();
+        LyricsEditor.setCurrentLineEnd(ct);
+        UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
+        refreshLyricsToProject();
+    });
+    UI.elements.nudgeStartBackButton.addEventListener('click', () => {
+        LyricsEditor.nudgeCurrentLineStart(-0.1);
+        UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
+        refreshLyricsToProject();
+    });
+    UI.elements.nudgeStartForwardButton.addEventListener('click', () => {
+        LyricsEditor.nudgeCurrentLineStart(0.1);
+        UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
+        refreshLyricsToProject();
+    });
+    UI.elements.nudgeEndBackButton.addEventListener('click', () => {
+        LyricsEditor.nudgeCurrentLineEnd(-0.1);
+        UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
+        refreshLyricsToProject();
+    });
+    UI.elements.nudgeEndForwardButton.addEventListener('click', () => {
+        LyricsEditor.nudgeCurrentLineEnd(0.1);
+        UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
+        refreshLyricsToProject();
+    });
+    UI.elements.clearLineTimesButton.addEventListener('click', () => {
+        LyricsEditor.clearCurrentLineTimes();
+        UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
+        refreshLyricsToProject();
     });
 }
 
@@ -116,9 +182,11 @@ async function handleLoadNewSong() {
         // Parse Lyrics
         const parsedLyrics = LyricsEditor.parseLyrics(lyricsText, audioFile.name);
         newProject.lyrics = parsedLyrics;
+        LyricsEditor.setLyrics(parsedLyrics);
 
         // Update UI and State
         currentProject = newProject;
+        lyricsArray = parsedLyrics;
         UI.updateProjectName(currentProject.meta.title);
         UI.displayLyrics(currentProject.lyrics);
         AudioHandler.loadAudio(audioAsset.url);
@@ -132,6 +200,8 @@ async function handleLoadNewSong() {
         AudioHandler.resetPlayback();
         UI.clearActiveLyric();
         UI.resetProgressBar();
+
+        duration = 0;
         if (isEditing) {
             LyricsEditor.updateEditorTarget(null);
         }
@@ -157,7 +227,7 @@ function saveCurrentProject() {
         alert("No song loaded to save.");
         return;
     }
-    const projectName = UI.elements.projectNameInput.value.trim();
+    const projectName = UI.elements.projectNameInput.value.trim() || currentProject.meta.title;
     if (!projectName) {
         alert("Please enter a name for the song project.");
         UI.elements.projectNameInput.focus();
@@ -165,6 +235,8 @@ function saveCurrentProject() {
     }
 
     currentProject.meta.title = projectName;
+    // Persist current timings from LyricsEditor
+    currentProject.lyrics = LyricsEditor.getLyrics();
 
     try {
         Storage.saveProject(currentProject);
@@ -201,11 +273,28 @@ async function handleImportProject(event) {
             }
 
             currentProject = importedData;
+            lyricsArray = importedData.lyrics || [];
+            LyricsEditor.setLyrics(lyricsArray);
             ProjectManager.loadProjectData(currentProject);
 
             // Add to history after successful load + asset verification
             Storage.saveProject(currentProject);
             ProjectManager.displayHistory();
+
+            // Update UI (audio/image/lyrics)
+            UI.updateProjectName(currentProject.meta.title);
+            UI.displayLyrics(currentProject.lyrics);
+            AudioHandler.loadAudio(audioAsset.url);
+            if (imageAsset) {
+                UI.displaySongImage(imageAsset.url);
+                Customization.extractAndApplyColors(imageAsset.url, true);
+            } else {
+                UI.displaySongImage(null);
+                Customization.resetThemeToDefault();
+            }
+            AudioHandler.resetPlayback();
+            UI.clearActiveLyric();
+            UI.resetProgressBar();
 
             alert(`Project "${currentProject.meta.title}" imported successfully!`);
         }
@@ -218,6 +307,7 @@ async function handleImportProject(event) {
     }
 }
 
+// Timing editor mode toggle
 function toggleTimingEditor() {
     isEditing = !isEditing;
     UI.elements.timingEditorDiv.style.display = isEditing ? 'block' : 'none';
@@ -232,15 +322,115 @@ function toggleTimingEditor() {
     UI.updateLayoutPadding(isEditing);
 }
 
-// --- Stub Callbacks ---
-function onAudioTimeUpdate(time) {
-    // Update logic for onAudioTimeUpdate - TBA
+//=== PLAYBACK UI logic ===
+
+function onPlayPauseClicked() {
+    if (!currentProject) {
+        alert("No song loaded!");
+        return;
+    }
+    if (AudioHandler.isPlaying()) {
+        AudioHandler.pause();
+        UI.elements.playPauseButton.textContent = '▶️ Play';
+    } else {
+        AudioHandler.play();
+        UI.elements.playPauseButton.textContent = '⏸️ Pause';
+    }
 }
-function onAudioEnded() {}
-function onAudioLoaded() {}
-function getAudioTime() {}
-function onTimingChange() {}
-function applyTheme(theme) {}
-function loadAndPlayProject(project) {}
-function onPlaylistUpdate() {}
-function loadProjectDataIntoModules(project) {}
+
+function onPrevSongClicked() {
+    // TODO: playlist logic
+    // Stub for playlist navigation
+    alert("Previous song (playlist) - not implemented yet.");
+}
+function onNextSongClicked() {
+    // TODO: playlist logic
+    alert("Next song (playlist) - not implemented yet.");
+}
+
+//== Progress bar, lyric highlighting, and timing ==
+
+function onAudioTimeUpdate(currentTime, dur) {
+    if (!ignoreProgressBarUpdate) {
+        UI.updateProgressBar(currentTime, dur || duration);
+    }
+    // Find lyrics line that should be highlighted
+    if (lyricsArray && lyricsArray.length) {
+        const idx = LyricsEditor.findLineForTime(currentTime);
+        UI.highlightLyric(idx);
+    }
+}
+function getAudioTime() {
+    return AudioHandler.getCurrentTime();
+}
+function onAudioLoaded(dur) {
+    duration = dur || AudioHandler.getDuration();
+    UI.updateProgressBar(0, duration);
+    UI.elements.progressBar.max = duration;
+    UI.elements.progressBar.value = 0;
+}
+function onAudioEnded() {
+    UI.elements.playPauseButton.textContent = '▶️ Play';
+    UI.highlightLyric(null);
+    UI.updateProgressBar(duration, duration);
+}
+function onTimingChange(newLyricsArr) {
+    lyricsArray = newLyricsArr;
+    if (currentProject) currentProject.lyrics = newLyricsArr;
+    UI.displayLyrics(lyricsArray);
+}
+
+// Needed when the project is loaded or the lyrics updated by the editor
+function refreshLyricsToProject() {
+    if (currentProject) {
+        currentProject.lyrics = LyricsEditor.getLyrics();
+        lyricsArray = currentProject.lyrics;
+        // UI.displayLyrics(lyricsArray); Don't call this or you'll lose selection; only update highlighting as needed
+    }
+}
+function applyTheme(theme) {
+    // Optionally handle storing theme
+    if (currentProject) {
+        currentProject.theme = theme;
+        Storage.saveTheme(theme);
+    }
+}
+function loadAndPlayProject(project) {
+    // Should: load project, then play automatically (for playlist)
+    // Here, same as loading project in import, then call AudioHandler.play();
+    loadProjectDataIntoModules(project);
+    setTimeout(() => {
+        AudioHandler.play();
+        UI.elements.playPauseButton.textContent = '⏸️ Pause';
+    }, 300);
+}
+function onPlaylistUpdate() {
+    // stub for now
+}
+function loadProjectDataIntoModules(project) {
+    // Used for directly loading a saved project from history/playlist
+    if (!project) return;
+    currentProject = project;
+    lyricsArray = project.lyrics || [];
+    LyricsEditor.setLyrics(lyricsArray);
+    const audioAsset = AssetManager.findAssetById(project.assets.audio);
+    const imageAsset = project.assets.image ? AssetManager.findAssetById(project.assets.image) : null;
+
+    // Update UI and state
+    UI.updateProjectName(currentProject.meta.title);
+    UI.displayLyrics(lyricsArray);
+    if (audioAsset) AudioHandler.loadAudio(audioAsset.url);
+    if (imageAsset) {
+        UI.displaySongImage(imageAsset.url);
+        Customization.extractAndApplyColors(imageAsset.url, true);
+    } else {
+        UI.displaySongImage(null);
+        Customization.resetThemeToDefault();
+    }
+    AudioHandler.resetPlayback();
+    UI.clearActiveLyric();
+    UI.resetProgressBar();
+    if (isEditing) {
+        LyricsEditor.updateEditorTarget(null);
+    }
+}
