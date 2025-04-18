@@ -84,7 +84,8 @@ export function initApp() {
         PlaybackController,
         TimingEditorController,
         ProjectManager,
-        LyricsEditor
+        LyricsEditor,
+        Customization
     });
 
     // Load initial state
