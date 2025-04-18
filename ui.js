@@ -10,17 +10,19 @@ export const elements = {
     lyricsUpload: document.getElementById('lyrics-upload'),
     imageUpload: document.getElementById('image-upload'),
     projectNameInput: document.getElementById('project-name'),
-    timingEditorDiv: document.querySelector('.timing-editor'),
     lyricsList: document.getElementById('lyrics-list'),
     songTitle: document.getElementById('song-title'),
     songImage: document.getElementById('song-image'),
     loadingOverlay: document.getElementById('loading-overlay'),
     loadingMessage: document.getElementById('loading-message'),
     historyList: document.getElementById('history-list'),
+    controlsContainer: document.querySelector('.controls-container'),
+    timingEditor: document.querySelector('.timing-editor'),
 };
 
 export function init() {
-    // Nothing to do initially. Set up listeners in main script.
+    // Call initial layout update
+    updateLayoutPadding(false); // Assume editor is hidden initially
 }
 
 export function setLoading(isLoading, message = "Loading...") {
@@ -36,8 +38,6 @@ export function displayLyrics(lyrics) {
     const ul = elements.lyricsList;
     ul.innerHTML = '';
     if (!lyrics || !lyrics.length) {
-        ul.innerHTML = '<li class="placeholder">No lyrics loaded.</li>';
-        return;
     }
     lyrics.forEach((line, idx) => {
         const li = document.createElement('li');
@@ -63,4 +63,16 @@ export function clearActiveLyric() {
 
 export function resetProgressBar() {
     // Progress bar logic; future implementation
+}
+
+export function updateLayoutPadding(isEditorVisible) {
+    // This function was not defined in the original code, 
+    // so it is implemented here based on the assumption 
+    // that it should toggle the padding of the controls container 
+    // based on the visibility of the timing editor.
+    if (isEditorVisible) {
+        elements.controlsContainer.style.paddingBottom = '20px'; // Replace '20px' with your desired padding
+    } else {
+        elements.controlsContainer.style.paddingBottom = '0px';
+    }
 }
