@@ -5,7 +5,7 @@ button {
     border: 1px solid var(--panel-border-color); 
     border-radius: 5px;
     cursor: pointer;
-    transition: background .17s;
+    transition: background .17s, color .17s, border-color .17s; 
     margin: 5px 6px 5px 0;
     font-size: 1em;
 }
@@ -15,6 +15,7 @@ button:hover {
 button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    background: color-mix(in srgb, var(--button-bg-color) 80%, var(--panel-border-color)); 
 }
 .delete-btn {
     background-color: var(--error-color);

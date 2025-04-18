@@ -1,18 +1,18 @@
 .footer-timing-editor {
     width: 100vw;
-    background: var(--footer-bg-color); /* Use theme footer background */
-    color: var(--text-color); /* Theme text color */
-    border-top: 1.5px solid var(--panel-border-color); /* Theme border */
+    background: var(--footer-bg-color); 
+    color: var(--text-color); 
+    border-top: 1.5px solid var(--panel-border-color); 
     border-radius: 0;
-    box-shadow: 0 -0.5px 3px rgba(234, 234, 234, 0.5);
+    box-shadow: 0 -0.5px 3px color-mix(in srgb, var(--panel-border-color) 50%, transparent);
     padding: 7px 9vw 5px 36vw;
     z-index: 575;
     min-height: var(--footer-timing-editor-height);
-    transition: padding .22s, background .2s, color .2s;
+    transition: padding .22s, background .2s, color .2s, border-color .2s; 
     box-sizing: border-box;
 }
 .footer-timing-editor p, .footer-timing-editor label {
-    color: inherit; /* Inherit text color */
+    color: inherit; 
 }
 @media (max-width: 900px) {
     .footer-timing-editor {
@@ -22,18 +22,18 @@
 
 .footer-controls-outer {
     width: 100vw;
-    background: var(--footer-bg-color); /* Use theme footer background */
-    color: var(--text-color); /* Theme text color */
+    background: var(--footer-bg-color); 
+    color: var(--text-color); 
     border-radius: 0;
     padding: 0 2vw 8px 2vw;
-    border-top: 1px solid var(--panel-border-color); /* Theme border */
-    box-shadow: 0 -3px 19px -9px rgba(170, 170, 170, 0.56);
+    border-top: 1px solid var(--panel-border-color); 
+    box-shadow: 0 -3px 19px -9px color-mix(in srgb, var(--panel-border-color) 50%, transparent);
     z-index: 580;
-    transition: background .2s, color .2s;
+    transition: background .2s, color .2s, border-color .2s; 
     box-sizing: border-box;
 }
 .footer-controls-outer span {
-    color: inherit; /* Inherit text color */
+    color: inherit; 
 }
 
 .footer-controls-outer .playback-controls,
@@ -51,27 +51,27 @@
     font-size: 1.13em;
     border-radius: 50%;
     padding: 6px 11px;
-    background: var(--button-bg-color); /* Use theme button background */
-    color: var(--button-text-color); /* Theme button text */
-    border: 1px solid var(--panel-border-color); /* Theme border */
-    transition: background .15s;
+    background: var(--button-bg-color); 
+    color: var(--button-text-color); 
+    border: 1px solid var(--panel-border-color); 
+    transition: background .15s, color .15s, border-color .15s; 
     min-width: 42px;
     min-height: 42px;
 }
 .footer-controls-outer .footer-nav-btn:hover {
-    background: var(--button-hover-bg-color); /* Theme hover background */
+    background: var(--button-hover-bg-color); 
 }
 .footer-controls-outer .footer-slider {
     width: 80px;
     max-width: 130px;
-    accent-color: var(--primary-color); /* Use primary accent color */
+    accent-color: var(--primary-color); 
     cursor: pointer;
 }
 .footer-volume-ico {
     margin-left: 2px;
     font-size: 1.27em;
     opacity: 0.8;
-    color: inherit; /* Inherit theme text color */
+    color: inherit; 
 }
 .footer-controls-outer .progress-controls {
     margin-top: 4px;
@@ -80,7 +80,7 @@
 .footer-progress-bar {
     width: clamp(160px, 48vw, 585px);
     margin: 0 2px;
-    accent-color: var(--primary-color); /* Use primary accent color */
+    accent-color: var(--primary-color); 
     cursor: pointer;
 }
 
@@ -96,13 +96,14 @@
     padding: 6px 12px;
     border-radius: 5px;
     margin: 3px 0;
-    background: var(--button-bg-color); /* Theme button */
+    background: var(--button-bg-color); 
     color: var(--button-text-color);
-    border-color: var(--panel-border-color);
+    border: 1px solid var(--panel-border-color); 
+    transition: background .15s, color .15s, border-color .15s; 
 }
 .timing-buttons button:hover {
-    background: var(--button-hover-bg-color); /* Theme button hover */
+    background: var(--button-hover-bg-color); 
 }
 .timing-buttons button:active {
-    background: color-mix(in srgb, var(--primary-color) 20%, var(--button-hover-bg-color)); /* Mix primary color on active */
+    background: color-mix(in srgb, var(--primary-color) 20%, var(--button-hover-bg-color)); 
 }

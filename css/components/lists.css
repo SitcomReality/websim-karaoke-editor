@@ -5,27 +5,42 @@
     margin: 5px 0;
     max-height: 200px; /* Limit height */
     overflow-y: auto;
-    border: 1px solid var(--panel-border-color);
+    border: 1px solid var(--panel-border-color); /* Use theme border */
     border-radius: 4px;
-    background: var(--input-bg-color); /* Match input background */
+    background: var(--input-bg-color); /* Use derived theme input background */
+    transition: background .2s, border-color .2s; /* Add transitions */
 }
 .history-panel li, .playlist-panel li, .assets-panel li {
     padding: 6px 10px;
-    border-bottom: 1px solid var(--panel-border-color);
+    border-bottom: 1px solid var(--panel-border-color); /* Use theme border */
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: var(--text-color); /* Theme text color */
+    transition: background .15s, color .15s, border-color .15s; /* Add transitions */
 }
 .history-panel li:last-child, .playlist-panel li:last-child, .assets-panel li:last-child {
     border-bottom: none;
 }
 .history-panel li:hover, .playlist-panel li:hover, .assets-panel li:hover {
-    background: var(--button-hover-bg-color); /* Use theme hover */
+    background: var(--button-hover-bg-color); /* Use theme hover (matches button hover) */
+    color: var(--button-text-color); /* Ensure text color matches hover state if needed */
 }
 .history-panel li .delete-history-btn {
     margin-left: 10px;
     padding: 2px 6px;
     font-size: 0.8em;
+}
+
+/* Ensure placeholder in these lists uses theme placeholder color */
+.history-panel ul .placeholder,
+.playlist-panel ul .placeholder,
+.assets-panel ul .placeholder {
+    color: var(--placeholder-text-color);
+    background: transparent !important;
+    border: none !important;
+    cursor: default;
+    text-align: center;
+    padding: 10px; /* Give placeholder some space */
 }

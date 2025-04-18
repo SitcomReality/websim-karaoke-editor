@@ -5,13 +5,16 @@
     gap: 22px;
     min-height: var(--header-min-height);
     width: 100%;
-    background: var(--header-bg-color); /* Use theme header background */
-    color: var(--text-color); /* Theme text color */
+    background: var(--header-bg-color); 
+    color: var(--text-color); 
     border-radius: 0 0 14px 14px;
     margin: 0;
     padding: 22px 0 18px 0;
-    box-shadow: 0 4px 20px -12px rgba(0,0,0,0.10), 0 1.5px 8px var(--panel-border-color); /* Adjusted shadow */
-    transition: box-shadow .16s, background .2s, color .2s;
+    box-shadow: 0 4px 20px -12px rgba(0,0,0,0.10), 0 1.5px 8px color-mix(in srgb, var(--panel-border-color) 50%, transparent);
+    transition: box-shadow .16s, background .2s, color .2s; 
+    border-bottom: 1px solid var(--panel-border-color); 
+    border-left: 1px solid var(--panel-border-color);
+    border-right: 1px solid var(--panel-border-color);
 }
 @media (max-width: 550px) {
     .main-header {
@@ -29,7 +32,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 420px;
-    color: inherit; /* Inherit from .main-header */
+    color: inherit; 
 }
 #song-image-container {
     max-width: 146px;
@@ -47,7 +50,8 @@
     display: block;
     object-fit: contain;
     border-radius: 7px;
-    background: #fff; /* Keep image background white or transparent? */
-    box-shadow: 0 2px 12px -8px rgba(136, 136, 136, 0.5), 0 0.5px 2px #efefef;
-    transition: border-radius .2s;
+    background: var(--input-bg-color); 
+    box-shadow: 0 2px 12px -8px color-mix(in srgb, var(--panel-border-color) 50%, transparent), 0 0.5px 2px var(--panel-border-color);
+    transition: border-radius .2s, background .2s, box-shadow .2s;
+    border: 1px solid var(--panel-border-color); 
 }

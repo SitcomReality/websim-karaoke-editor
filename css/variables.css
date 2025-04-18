@@ -1,25 +1,26 @@
 :root {
-    /* Theme Colors (Primary) */
+    /* Theme Colors (Primary) - User settable */
     --background-color: #f0f0f0;
     --text-color: #282828;
     --highlight-bg-color: #fff685;
     --highlight-text-color: #000000;
-    --primary-color: #2980d9; /* Used for accents like progress bar */
+    --primary-color: #2980d9; /* Used for accents like progress bar, active states */
 
-    /* Derived/Secondary Theme Colors (set based on primary) */
-    --panel-bg-color: #ededed;
-    --panel-border-color: #d6d6d6;
-    --button-bg-color: #e0e0e0; /* Slightly darker than panel */
-    --button-hover-bg-color: #d0d0d0;
-    --button-text-color: var(--text-color);
-    --header-bg-color: var(--panel-bg-color);
-    --footer-bg-color: var(--panel-bg-color);
-    --sidebar-bg-color: var(--panel-bg-color);
-    --lyrics-container-bg: rgba(255, 255, 255, 0.85); /* Keep lyrics area light by default */
-    --lyrics-frame-bg: #ffffff; /* Frame around lyrics */
-    --input-bg-color: #ffffff;
-    --input-border-color: #bbb;
-    --placeholder-text-color: #999;
+    /* Derived/Secondary Theme Colors (Calculated/fixed relative to primary) */
+    /* Use color-mix for dynamic derivation where possible, fallback static */
+    --panel-bg-color: color-mix(in srgb, var(--background-color) 95%, black 5%); /* Slightly darker bg */
+    --panel-border-color: color-mix(in srgb, var(--background-color) 80%, black 20%); /* Darker border */
+    --button-bg-color: color-mix(in srgb, var(--background-color) 90%, black 10%); /* Darker than panel */
+    --button-hover-bg-color: color-mix(in srgb, var(--background-color) 85%, black 15%); /* Even darker hover */
+    --button-text-color: var(--text-color); /* Use main text color for buttons */
+    --header-bg-color: var(--panel-bg-color); /* Header matches panels */
+    --footer-bg-color: var(--panel-bg-color); /* Footer matches panels */
+    --sidebar-bg-color: var(--panel-bg-color); /* Sidebar matches panels */
+    --lyrics-frame-bg: color-mix(in srgb, var(--background-color) 98%, white 2%); /* Slightly lighter than main bg */
+    --lyrics-container-bg: color-mix(in srgb, var(--background-color) 100%, white 0%); /* Match main bg, maybe slightly transparent if needed */
+    --input-bg-color: color-mix(in srgb, var(--background-color) 100%, white 5%); /* Input bg slightly lighter than main bg */
+    --input-border-color: var(--panel-border-color); /* Input border matches panel border */
+    --placeholder-text-color: color-mix(in srgb, var(--text-color) 60%, transparent); /* Muted text color */
     --link-color: var(--primary-color);
 
     /* Layout */
