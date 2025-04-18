@@ -25,6 +25,8 @@ export const elements = {
     progressBar: document.getElementById('progress-bar'),
     currentTimeLabel: document.getElementById('current-time'),
     durationLabel: document.getElementById('duration'),
+    selectedLineStartLabel: document.getElementById('selected-line-start'),
+    selectedLineEndLabel: document.getElementById('selected-line-end'),
     setLineStartButton: document.getElementById('set-line-start'),
     setLineEndButton: document.getElementById('set-line-end'),
     nudgeStartBackButton: document.getElementById('nudge-start-back'),
@@ -33,11 +35,14 @@ export const elements = {
     nudgeEndForwardButton: document.getElementById('nudge-end-forward'),
     clearLineTimesButton: document.getElementById('clear-line-times'),
     lyricsContainer: document.querySelector('.lyrics-container'),
+    colorBgInput: document.getElementById('color-bg'),
+    colorTextInput: document.getElementById('color-text'),
+    colorHighlightBgInput: document.getElementById('color-highlight-bg'),
+    colorHighlightTextInput: document.getElementById('color-highlight-text'),
 };
 
 let isTimingEditorVisible = false;
 let lastLyricsForTimes = [];
-let lastLineTimes = null;
 let lastCustomOnTimeFieldClick = null;
 
 export function init() {
@@ -46,9 +51,8 @@ export function init() {
 
 export function setTimingEditorVisible(visible) {
     isTimingEditorVisible = visible;
-    // Optionally update existing lyrics display
     if (lastLyricsForTimes && lastLyricsForTimes.length) {
-        displayLyrics(lastLyricsForTimes, lastLineTimes, lastCustomOnTimeFieldClick);
+        displayLyrics(lastLyricsForTimes, isTimingEditorVisible, lastCustomOnTimeFieldClick);
     }
 }
 
@@ -61,17 +65,10 @@ export function updateProjectName(title) {
     elements.songTitle.textContent = title;
 }
 
-/**
- * Render the lyrics list. If in timing editor, shows line start/end times.
- * @param {Array} lyrics - Array of lyric lines, each { text, start, end }
- * @param {Function|Array} [lineTimes] - Optional: array of {start, end} (or function for advanced)
- * @param {Function} [onTimeFieldClick] - If provided, called when the lyric-time-field is clicked
- */
-export function displayLyrics(lyrics, lineTimes, onTimeFieldClick) {
-    // Save arguments for re-render when timing editor mode is toggled
+export function displayLyrics(lyrics, showTimes, onTimeFieldClick) {
     lastLyricsForTimes = lyrics;
-    lastLineTimes = lineTimes;
     lastCustomOnTimeFieldClick = onTimeFieldClick;
+    isTimingEditorVisible = showTimes;
 
     const ul = elements.lyricsList;
     ul.innerHTML = '';
@@ -82,23 +79,21 @@ export function displayLyrics(lyrics, lineTimes, onTimeFieldClick) {
         ul.appendChild(li);
         return;
     }
-    ul.classList.toggle('show-times', isTimingEditorVisible);
+    ul.classList.toggle('show-times', showTimes);
 
     lyrics.forEach((line, idx) => {
         const li = document.createElement('li');
         li.dataset.idx = idx;
 
-        if (isTimingEditorVisible) {
-            // Timing-edit mode: show times in a left column
+        if (showTimes) {
             const timeSpan = document.createElement('span');
             timeSpan.className = 'lyric-time-field';
             timeSpan.textContent = formatLineTimes(line);
 
-            // Make time span clickable if callback provided
             if (typeof onTimeFieldClick === 'function') {
                 timeSpan.style.cursor = 'pointer';
                 timeSpan.title = 'Click to edit timing';
-                timeSpan.addEventListener('click', function(evt) {
+                timeSpan.addEventListener('click', (evt) => {
                     evt.stopPropagation();
                     onTimeFieldClick(evt);
                 });
@@ -107,12 +102,9 @@ export function displayLyrics(lyrics, lineTimes, onTimeFieldClick) {
             li.appendChild(timeSpan);
         }
 
-        // Lyric text span (preserves alignment if time column is present)
         const textSpan = document.createElement('span');
         textSpan.className = 'lyric-line-text';
         textSpan.textContent = line.text || '';
-        // DO NOT set pointer-events:none so line can be clicked (for editing)
-        // The text span should allow click to bubble (default)
         li.appendChild(textSpan);
         ul.appendChild(li);
     });
@@ -133,56 +125,96 @@ export function clearActiveLyric() {
 }
 
 export function highlightLyric(idx) {
+    const lis = elements.lyricsList.children;
+    for (let i = 0; i < lis.length; i++) {
+        const isCurrent = i === idx;
+        if (lis[i].classList.contains('current') !== isCurrent) {
+            lis[i].classList.toggle('current', isCurrent);
+        }
+        if (isCurrent && elements.lyricsContainer) {
+            const containerRect = elements.lyricsContainer.getBoundingClientRect();
+            const lineRect = lis[i].getBoundingClientRect();
+
+            if (lineRect.bottom < containerRect.top + 30 || lineRect.top > containerRect.bottom - 30) {
+                lis[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+}
+
+export function highlightEditingLine(idx) {
     Array.from(elements.lyricsList.children).forEach((li, i) => {
-        li.classList.toggle('current', i === idx);
+        li.classList.toggle('editing', i === idx);
     });
 }
 
 export function resetProgressBar() {
     if (elements.progressBar) {
         elements.progressBar.value = 0;
+        elements.progressBar.max = 0;
     }
     if (elements.currentTimeLabel) elements.currentTimeLabel.textContent = '0:00';
     if (elements.durationLabel) elements.durationLabel.textContent = '0:00';
 }
 
 export function updateProgressBar(currentTime = 0, duration = 0) {
+    const validDuration = (typeof duration === 'number' && !isNaN(duration) && duration > 0) ? duration : 0;
+    const validCurrentTime = (typeof currentTime === 'number' && !isNaN(currentTime)) ? currentTime : 0;
+
     if (elements.progressBar) {
-        elements.progressBar.max = duration || 0;
-        elements.progressBar.value = currentTime || 0;
+        elements.progressBar.max = validDuration;
+        elements.progressBar.value = Math.min(validCurrentTime, validDuration);
     }
-    if (elements.currentTimeLabel) elements.currentTimeLabel.textContent = formatTime(currentTime);
-    if (elements.durationLabel) elements.durationLabel.textContent = formatTime(duration);
+    if (elements.currentTimeLabel) elements.currentTimeLabel.textContent = formatTime(validCurrentTime);
+    if (elements.durationLabel) elements.durationLabel.textContent = formatTime(validDuration);
+}
+
+export function updateTimingEditorFields(idx, lineData) {
+    const startLabel = elements.selectedLineStartLabel;
+    const endLabel = elements.selectedLineEndLabel;
+
+    if (idx === null || !lineData || !startLabel || !endLabel) {
+        startLabel.textContent = '--:--';
+        endLabel.textContent = '--:--';
+    } else {
+        startLabel.textContent = formatTime(lineData.start);
+        endLabel.textContent = formatTime(lineData.end);
+    }
 }
 
 export function formatTime(val) {
-    if (val == null || isNaN(val)) return '0:00';
-    const min = Math.floor(val / 60);
-    const sec = Math.floor(val % 60);
+    if (val === null || typeof val !== 'number' || isNaN(val)) return '--:--';
+    const totalSeconds = Math.max(0, val);
+    const min = Math.floor(totalSeconds / 60);
+    const sec = Math.floor(totalSeconds % 60);
     return `${min}:${sec < 10 ? '0' : ''}${sec}`;
 }
 
 function formatLineTimes(line) {
-    // Returns "[mm:ss]-[mm:ss]" or "[mm:ss]" or "--:--" if no info
-    if (typeof line.start === "number" && !isNaN(line.start)) {
-        const start = formatTime(line.start);
-        if (typeof line.end === "number" && !isNaN(line.end)) {
-            return `[${start} – ${formatTime(line.end)}]`;
+    if (!line) return '[--:--]';
+    const startStr = formatTime(line.start);
+    const endStr = formatTime(line.end);
+
+    if (startStr !== '--:--') {
+        if (endStr !== '--:--') {
+            return `[${startStr} – ${endStr}]`;
         }
-        return `[${start}]`;
+        return `[${startStr}]`;
     }
     return '[--:--]';
 }
 
 export function updateLayoutPadding(isEditorVisible) {
-    isTimingEditorVisible = isEditorVisible;
     const mainContent = document.querySelector('.main-content');
     const editorHeight = elements.timingEditorDiv?.offsetHeight || 0;
     if (mainContent) {
-        mainContent.style.paddingBottom = isEditorVisible ? `${editorHeight + 20}px` : '15px';
+        mainContent.style.paddingBottom = isTimingEditorVisible ? `${editorHeight + 20}px` : '15px';
     }
-    // Re-render lyrics to show/hide times as needed
-    if (lastLyricsForTimes && lastLyricsForTimes.length) {
-        displayLyrics(lastLyricsForTimes, lastLineTimes, lastCustomOnTimeFieldClick);
-    }
+}
+
+export function updateThemeInputs(theme) {
+    if (elements.colorBgInput) elements.colorBgInput.value = theme.background || '#f0f0f0';
+    if (elements.colorTextInput) elements.colorTextInput.value = theme.text || '#333333';
+    if (elements.colorHighlightBgInput) elements.colorHighlightBgInput.value = theme.highlightBg || '#ffff99';
+    if (elements.colorHighlightTextInput) elements.colorHighlightTextInput.value = theme.highlightText || '#000000';
 }

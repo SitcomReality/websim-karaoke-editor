@@ -11,6 +11,7 @@ import * as FileHandler from './fileHandler.js';
 import * as PlaybackController from './playbackController.js';
 import * as ProjectController from './projectController.js';
 import * as TimingEditorController from './timingEditorController.js';
+import * as LyricsEditor from './lyricsEditor.js';
 
 // --- Global State ---
 // Most state moved to specific controllers (ProjectController, PlaybackController, TimingEditorController)
@@ -29,6 +30,7 @@ window.KaraokeEditor = {
     PlaybackController,
     ProjectController,
     TimingEditorController,
+    LyricsEditor,
     get currentProject() { return ProjectController.getCurrentProject(); },
 };
 
@@ -40,25 +42,36 @@ export function initApp() {
 
     // Initialize Managers
     AssetManager.init();
-    ProjectManager.init(ProjectController.loadProjectDataIntoModules); 
-    PlaylistManager.init(ProjectController.loadAndPlayProject, onPlaylistUpdate); 
+    ProjectManager.init(ProjectController.loadProjectDataIntoModules);
+    PlaylistManager.init(ProjectController.loadAndPlayProject, onPlaylistUpdate);
 
     // Initialize Controllers (pass necessary dependencies)
+    LyricsEditor.init({ UI });
+
     ProjectController.init({
         UI,
         Storage,
         AssetManager,
         Customization,
-        PlaybackController, 
-        LyricsEditor: TimingEditorController.getLyricsEditorModule(), 
-        onProjectLoaded: () => { 
-             TimingEditorController.syncLyrics(); 
-             PlaybackController.syncWithProject(); 
-             UI.displayLyrics(ProjectController.getCurrentProject()?.lyrics || [], TimingEditorController.isEditorVisible(), TimingEditorController.onLyricTimeFieldClick);
+        PlaybackController,
+        LyricsEditor,
+        onProjectLoaded: () => {
+             TimingEditorController.syncLyrics();
+             UI.displayLyrics(
+                 ProjectController.getCurrentProjectLyrics(),
+                 TimingEditorController.isEditorVisible(),
+                 TimingEditorController.onLyricTimeFieldClick
+             );
         }
     });
-    PlaybackController.init({ UI, ProjectController, LyricsEditor: TimingEditorController.getLyricsEditorModule() }); 
-    TimingEditorController.init({ UI, PlaybackController, ProjectController, onLyricsChanged: ProjectController.updateCurrentProjectLyrics }); 
+    PlaybackController.init({ UI, ProjectController, LyricsEditor });
+    TimingEditorController.init({
+        UI,
+        PlaybackController,
+        ProjectController,
+        LyricsEditor,
+        onLyricsChanged: ProjectController.updateCurrentProjectLyrics
+    });
 
     // Initialize Customization (needs project controller to apply/save theme)
     Customization.init(ProjectController.applyAndSaveTheme);
@@ -70,51 +83,26 @@ export function initApp() {
         ProjectController,
         PlaybackController,
         TimingEditorController,
-        ProjectManager 
+        ProjectManager,
+        LyricsEditor
     });
 
     // Load initial state
-    ProjectManager.loadHistory(); 
-    AssetManager.loadSessionAssets(); 
-    PlaylistManager.loadCurrentPlaylist(); 
-    Customization.applyTheme(Storage.loadTheme() || Customization.getDefaultTheme()); 
+    ProjectManager.loadHistory();
+    AssetManager.loadSessionAssets();
+    PlaylistManager.loadCurrentPlaylist();
+    const savedTheme = Storage.loadTheme();
+    Customization.applyTheme(savedTheme || Customization.getDefaultTheme());
+    if (savedTheme) {
+        UI.updateThemeInputs(savedTheme);
+    }
 
     // Initial UI setup
-    PlaybackController.resetUI(); 
+    PlaybackController.resetUI();
 
     console.log("Karaoke Editor Initialized");
 }
 
-// --- Event Registration ---
-// removed function setupCoreEventListeners() {} - Moved to eventBinder.js
-
-// --- Core Functionalities ---
-
-// removed async function handleLoadNewSong() {} - Moved to fileHandler.js
-// removed function saveCurrentProject() {} - Moved to projectController.js
-// removed async function handleImportProject(event) {} - Moved to fileHandler.js
-// removed function toggleTimingEditor() {} - Moved to timingEditorController.js
-
-//=== PLAYBACK UI logic ===
-
-// removed function onPlayPauseClicked() {} - Moved to playbackController.js
-// removed function onPrevSongClicked() {} - Moved to playbackController.js (or playlist manager later)
-// removed function onNextSongClicked() {} - Moved to playbackController.js (or playlist manager later)
-
-//== Progress bar, lyric highlighting, and timing ==
-
-// removed function onAudioTimeUpdate(currentTime, dur) {} - Moved to playbackController.js
-// removed function getAudioTime() {} - Now accessed via PlaybackController.getAudioTime()
-// removed function onAudioLoaded(dur) {} - Moved to playbackController.js
-// removed function onAudioEnded() {} - Moved to playbackController.js
-// removed function onTimingChange(newLyricsArr) {} - Handled by TimingEditorController callback
-// removed function refreshLyricsToProject() {} - Logic incorporated into ProjectController/TimingEditorController interactions
-// removed function applyTheme(theme) {} - Moved to projectController.js as applyAndSaveTheme
-// removed function loadAndPlayProject(project) {} - Moved to projectController.js
-// removed function onPlaylistUpdate() {} - Still here, needs implementation or removal
 function onPlaylistUpdate() {
-    // stub for now
     console.log("Playlist updated (stub)");
 }
-// removed function loadProjectDataIntoModules(project) {} - Moved to projectController.js
-// removed function onLyricTimeFieldClick(evt) {} - Moved to timingEditorController.js

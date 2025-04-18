@@ -14,7 +14,7 @@ export function init(dependencies) {
     AssetManager = dependencies.AssetManager;
     Customization = dependencies.Customization;
     PlaybackController = dependencies.PlaybackController;
-    LyricsEditor = dependencies.LyricsEditor; // Direct dependency injection
+    LyricsEditor = dependencies.LyricsEditor; 
     onProjectLoadedCallback = dependencies.onProjectLoaded;
 }
 
