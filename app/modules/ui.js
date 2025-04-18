@@ -51,6 +51,55 @@ let isTimingEditorVisible = false;
 let lastLyricsForTimes = [];
 let lastCustomOnTimeFieldClick = null;
 
+/**
+ * Helper: Scrolls a given <li> inside the lyricsContainer so that it's always visible
+ * and tries to keep it vertically centered.
+ */
+function scrollLyricIntoView(li) {
+    const container = elements.lyricsContainer;
+    if (!li || !container) return;
+
+    // Top of the container relative to the document
+    const containerRect = container.getBoundingClientRect();
+    const liRect = li.getBoundingClientRect();
+
+    // Offset of li within lyricsContainer
+    const liOffsetTop = li.offsetTop;
+    const liHeight = li.offsetHeight;
+    const containerHeight = container.clientHeight;
+
+    // Calculate new scrollTop so li will be vertically centered
+    let desiredScrollTop = liOffsetTop - containerHeight / 2 + liHeight / 2;
+
+    // Clamp desired scrollTop between 0 and maximum scroll
+    desiredScrollTop = Math.max(0, Math.min(desiredScrollTop, container.scrollHeight - containerHeight));
+
+    // Only scroll if needed to reduce jank
+    // But always try to scroll if the li is out of view
+    const liTopInContainer = liOffsetTop;
+    const liBottomInContainer = liOffsetTop + liHeight;
+    const visibleTop = container.scrollTop;
+    const visibleBottom = visibleTop + containerHeight;
+
+    let needScroll = false;
+    // If li is below the visible area
+    if (liBottomInContainer > visibleBottom - 12) needScroll = true;
+    // If li is above the visible area
+    if (liTopInContainer < visibleTop + 12) needScroll = true;
+    // If the highlighted line is not centered enough, try to center it more aggressively
+    const currentCenter = visibleTop + containerHeight / 2;
+    const liCenter = liTopInContainer + liHeight / 2;
+    // If the line is far from center (>30px), scroll toward center
+    if (Math.abs(liCenter - currentCenter) > 30) needScroll = true;
+
+    if (needScroll) {
+        container.scrollTo({
+            top: desiredScrollTop,
+            behavior: 'smooth'
+        });
+    }
+}
+
 export function init() {
     updateLayoutPadding(false);
 
@@ -170,51 +219,19 @@ export function clearActiveLyric() {
 
 export function highlightLyric(idx) {
     const lis = elements.lyricsList.children;
+    let targetLi = null;
     for (let i = 0; i < lis.length; i++) {
         const isCurrent = i === idx;
         if (lis[i].classList.contains('current') !== isCurrent) {
             lis[i].classList.toggle('current', isCurrent);
         }
+        if (isCurrent) targetLi = lis[i];
     }
-
-    // Smoothly scroll the current line to the vertical center of the container if needed
+    // Improved: Always ensure highlighted line is visible and vertically centered if possible
     if (typeof idx === 'number' && idx >= 0 && elements.lyricsContainer) {
         const currentLi = elements.lyricsList.querySelector(`li[data-idx="${idx}"]`);
         if (currentLi) {
-            // Check if the element is outside (or near the edges of) the visible viewport of the container
-            // If not, do not scroll (reduces jarring effect).
-            const container = elements.lyricsContainer;
-            const containerRect = container.getBoundingClientRect();
-            const lineRect = currentLi.getBoundingClientRect();
-
-            // Compute the visible top/bottom boundaries (add slight padding)
-            const visibleTop = containerRect.top + 30;
-            const visibleBottom = containerRect.bottom - 30;
-
-            // If the highlighted line is outside the area, or too close to the edge, recenter it
-            if (
-                lineRect.bottom < visibleTop ||
-                lineRect.top > visibleBottom ||
-                lineRect.top < containerRect.top + (containerRect.height * 0.25) ||
-                lineRect.bottom > containerRect.bottom - (containerRect.height * 0.25)
-            ) {
-                // Scroll so that the lyric is in the middle of the lyrics container
-                // This is preferable to "block: 'center'" which sometimes over/undershoots
-                const containerScrollTop = container.scrollTop;
-                const liOffsetTop = currentLi.offsetTop;
-                const liHeight = currentLi.offsetHeight;
-                const containerHeight = container.clientHeight;
-                // Center line in the visible area
-                const targetScrollTop = liOffsetTop - (containerHeight / 2) + (liHeight / 2);
-
-                // Animate scroll only if it's meaningfully different
-                if (Math.abs(containerScrollTop - targetScrollTop) > 10) {
-                    container.scrollTo({
-                        top: targetScrollTop,
-                        behavior: 'smooth'
-                    });
-                }
-            }
+            scrollLyricIntoView(currentLi);
         }
     }
 }
@@ -228,23 +245,7 @@ export function highlightEditingLine(idx) {
     if (idx !== null && elements.lyricsContainer) {
         const lineElement = elements.lyricsList.querySelector(`li[data-idx="${idx}"]`);
         if (lineElement) {
-            const containerRect = elements.lyricsContainer.getBoundingClientRect();
-            const lineRect = lineElement.getBoundingClientRect();
-
-            // Scroll editing line nicely into view (similar logic to highlightLyric)
-            const container = elements.lyricsContainer;
-            const containerScrollTop = container.scrollTop;
-            const liOffsetTop = lineElement.offsetTop;
-            const liHeight = lineElement.offsetHeight;
-            const containerHeight = container.clientHeight;
-            const targetScrollTop = liOffsetTop - (containerHeight / 2) + (liHeight / 2);
-
-            if (Math.abs(containerScrollTop - targetScrollTop) > 10) {
-                container.scrollTo({
-                    top: targetScrollTop,
-                    behavior: 'smooth'
-                });
-            }
+            scrollLyricIntoView(lineElement);
         }
     }
 }
