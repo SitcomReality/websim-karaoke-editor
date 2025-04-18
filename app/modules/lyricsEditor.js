@@ -80,8 +80,10 @@ export function disableEditing() {
 
 function onLyricClick(e) {
     if (!editorEnabled) return;
-    if (e.target.tagName === 'LI' && !e.target.classList.contains('placeholder')) {
-        selectEditorLine(parseInt(e.target.dataset.idx, 10));
+    // Prioritize lyric-line-text for selection, but allow clicking timefield as handled elsewhere
+    const li = e.target.closest('li');
+    if (li && !li.classList.contains('placeholder') && typeof li.dataset.idx !== 'undefined') {
+        selectEditorLine(parseInt(li.dataset.idx, 10));
     }
 }
 
@@ -114,12 +116,15 @@ export function getCurrentEditorLineIdx() {
 
 export function setCurrentLineStart(time) {
     if (currentLineIdx === null || !lyrics[currentLineIdx]) return;
-    lyrics[currentLineIdx].start = Number(time);
-    // If next line exists and has a start, set end for current line to next start
-    if (currentLineIdx < lyrics.length - 1 && typeof lyrics[currentLineIdx + 1].start === 'number') {
-        lyrics[currentLineIdx].end = lyrics[currentLineIdx + 1].start;
+    let nextStart = (currentLineIdx < lyrics.length - 1 && typeof lyrics[currentLineIdx + 1].start === 'number')
+        ? lyrics[currentLineIdx + 1].start : undefined;
+
+    lyrics[currentLineIdx].start = sanitizeTime(time);
+
+    // Only allow end <= next line start
+    if (typeof lyrics[currentLineIdx].end === 'number' && typeof nextStart === 'number' && lyrics[currentLineIdx].end > nextStart) {
+        lyrics[currentLineIdx].end = nextStart;
     }
-    // else leave end
     if (typeof lyrics[currentLineIdx].end !== 'number' || lyrics[currentLineIdx].end < lyrics[currentLineIdx].start) {
         lyrics[currentLineIdx].end = lyrics[currentLineIdx].start + 1; // 1s default
     }
@@ -128,30 +133,74 @@ export function setCurrentLineStart(time) {
 
 export function setCurrentLineEnd(time) {
     if (currentLineIdx === null || !lyrics[currentLineIdx]) return;
-    lyrics[currentLineIdx].end = Number(time);
+    let nextStart = (currentLineIdx < lyrics.length - 1 && typeof lyrics[currentLineIdx + 1].start === 'number')
+        ? lyrics[currentLineIdx + 1].start : undefined;
+    time = sanitizeTime(time);
+
+    // Clamp end <= next line start (if timing exists for next)
+    if (typeof nextStart === 'number' && time > nextStart)
+        time = nextStart;
+    // Ensure end >= start+epsilon
+    if (typeof lyrics[currentLineIdx].start === 'number' && time <= lyrics[currentLineIdx].start)
+        time = lyrics[currentLineIdx].start + 0.01;
+
+    lyrics[currentLineIdx].end = time;
+
     // Optionally: Set start of next line
     if (currentLineIdx < lyrics.length - 1) {
         if (!lyrics[currentLineIdx + 1].start || lyrics[currentLineIdx + 1].start < time) {
-            // only set if new end is after previous defined start
-            lyrics[currentLineIdx + 1].start = Number(time);
+            lyrics[currentLineIdx + 1].start = time;
         }
     }
+    propagateTimingUpdate();
+}
+
+/**
+ * Set both start and end times for a specific lyric line.
+ * Constrain to avoid overlap with next line.
+ */
+export function setLineTimes(idx, start, end) {
+    if (!lyrics[idx]) return;
+    const prevEnd = idx > 0 && typeof lyrics[idx - 1].end === 'number' ? lyrics[idx - 1].end : undefined;
+    const nextStart = idx < lyrics.length - 1 && typeof lyrics[idx + 1].start === 'number' ? lyrics[idx + 1].start : undefined;
+
+    if (typeof start === 'number' && start < 0) start = 0;
+    if (typeof end === 'number' && typeof start === 'number' && end <= start)
+        end = start + 0.01;
+    if (typeof nextStart === 'number' && typeof end === 'number' && end > nextStart)
+        end = nextStart;
+    lyrics[idx].start = (typeof start === 'number' ? start : null);
+    lyrics[idx].end = (typeof end === 'number' ? end : null);
+
     propagateTimingUpdate();
 }
 
 export function nudgeCurrentLineStart(delta) {
     if (currentLineIdx === null || !lyrics[currentLineIdx]) return;
     const line = lyrics[currentLineIdx];
-    line.start = Math.max(0, (line.start || 0) + delta);
-    if (typeof line.end === 'number' && line.end < line.start)
-        line.end = line.start + 0.1;
+    let newStart = sanitizeTime((line.start || 0) + delta);
+    // Do not allow newStart >= end or < 0
+    if (typeof line.end === 'number' && newStart >= line.end)
+        newStart = line.end - 0.01;
+    if (newStart < 0) newStart = 0;
+    line.start = newStart;
     propagateTimingUpdate();
 }
 
 export function nudgeCurrentLineEnd(delta) {
     if (currentLineIdx === null || !lyrics[currentLineIdx]) return;
     const line = lyrics[currentLineIdx];
-    line.end = Math.max((line.end || (line.start || 0) + 0.1) + delta, (line.start || 0) + 0.1);
+    let newEnd = sanitizeTime((line.end || (line.start || 0) + 0.1) + delta);
+    // Do not allow end before start
+    if (typeof line.start === 'number' && newEnd <= line.start)
+        newEnd = line.start + 0.01;
+    // Also, not after next line start
+    if (currentLineIdx < lyrics.length - 1 &&
+        typeof lyrics[currentLineIdx + 1].start === 'number' &&
+        newEnd > lyrics[currentLineIdx + 1].start) {
+        newEnd = lyrics[currentLineIdx + 1].start;
+    }
+    line.end = newEnd;
     propagateTimingUpdate();
 }
 
@@ -189,4 +238,11 @@ function propagateTimingUpdate() {
     if (onTimingChangeCb) onTimingChangeCb(lyrics.slice());
     // Also update the time fields for the currently selected line
     updateTimingEditorFields(currentLineIdx);
+}
+
+function sanitizeTime(val) {
+    let num = Number(val);
+    if (!isFinite(num) || isNaN(num)) return null;
+    if (num < 0) num = 0;
+    return num;
 }

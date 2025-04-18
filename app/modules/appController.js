@@ -16,6 +16,7 @@ let isEditing = false;
 let duration = 0;
 let lyricsArray = [];
 let ignoreProgressBarUpdate = false;
+let autoSelectNextLine = false;
 
 // --- Export specifically for debugging
 window.KaraokeEditor = {
@@ -52,6 +53,15 @@ export function initApp() {
 
     // Show default song duration/progress
     UI.resetProgressBar();
+
+    // NEW: auto select next line checkbox
+    const autoSelectCheckbox = document.getElementById('auto-select-next-line');
+    if (autoSelectCheckbox) {
+        autoSelectNextLine = autoSelectCheckbox.checked;
+        autoSelectCheckbox.addEventListener('change', (e) => {
+            autoSelectNextLine = e.target.checked;
+        });
+    }
 }
 
 // --- Event Registration ---
@@ -111,45 +121,52 @@ function setupCoreEventListeners() {
         LyricsEditor.setCurrentLineStart(ct);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
-        // Show updated line times
-        UI.displayLyrics(lyricsArray);
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick); 
     });
     UI.elements.setLineEndButton.addEventListener('click', () => {
         const ct = getAudioTime();
         LyricsEditor.setCurrentLineEnd(ct);
+
+        if (autoSelectNextLine) {
+            // Select next line if possible
+            const idx = LyricsEditor.getCurrentEditorLineIdx();
+            if (typeof idx === 'number' && idx < lyricsArray.length - 1) {
+                LyricsEditor.updateEditorTarget(idx + 1);
+            }
+        }
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
-        UI.displayLyrics(lyricsArray);
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick); 
     });
     UI.elements.nudgeStartBackButton.addEventListener('click', () => {
         LyricsEditor.nudgeCurrentLineStart(-0.1);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
-        UI.displayLyrics(lyricsArray);
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick);
     });
     UI.elements.nudgeStartForwardButton.addEventListener('click', () => {
         LyricsEditor.nudgeCurrentLineStart(0.1);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
-        UI.displayLyrics(lyricsArray);
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick);
     });
     UI.elements.nudgeEndBackButton.addEventListener('click', () => {
         LyricsEditor.nudgeCurrentLineEnd(-0.1);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
-        UI.displayLyrics(lyricsArray);
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick);
     });
     UI.elements.nudgeEndForwardButton.addEventListener('click', () => {
         LyricsEditor.nudgeCurrentLineEnd(0.1);
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
-        UI.displayLyrics(lyricsArray);
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick);
     });
     UI.elements.clearLineTimesButton.addEventListener('click', () => {
         LyricsEditor.clearCurrentLineTimes();
         UI.highlightLyric(LyricsEditor.getCurrentEditorLineIdx());
         refreshLyricsToProject();
-        UI.displayLyrics(lyricsArray);
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick);
     });
 }
 
@@ -331,7 +348,7 @@ function toggleTimingEditor() {
     UI.updateLayoutPadding(isEditing);
     // Re-render lyrics to show/hide times for left column
     if (lyricsArray && lyricsArray.length) {
-        UI.displayLyrics(lyricsArray);
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick);
     }
 }
 
@@ -446,4 +463,79 @@ function loadProjectDataIntoModules(project) {
     if (isEditing) {
         LyricsEditor.updateEditorTarget(null);
     }
+    // Also refresh lyrics list and click handlers for input
+    if (lyricsArray && lyricsArray.length) {
+        UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick);
+    }
+}
+
+// Attach input logic for lyric-time-fields to enable manual entry
+function onLyricTimeFieldClick(evt) {
+    // Only act if click was on a .lyric-time-field
+    const target = evt.target;
+    if (!target.classList.contains('lyric-time-field')) return;
+    const li = target.closest('li');
+    if (!li) return;
+    const idx = parseInt(li.dataset.idx, 10);
+
+    // Get line info
+    const line = lyricsArray[idx];
+    // Open prompt for editing: show both start/end, prefilled, mm:ss format
+    const startStr = typeof line.start === 'number' ? LyricsEditor.formatTime(line.start) : '';
+    const endStr = typeof line.end === 'number' ? LyricsEditor.formatTime(line.end) : '';
+
+    let input = prompt(
+      `Edit timings for this line:\n[format: mm:ss or ss.ss, separate start & end with "-"]\nLeave blank to unset a value.\n\nCurrent: [${startStr}] – [${endStr}]`,
+      startStr && endStr ? `${startStr}-${endStr}` : startStr || endStr
+    );
+    if (input === null) return;
+
+    input = input.trim();
+    let newStart = line.start, newEnd = line.end;
+    let error = null;
+
+    // Parse input
+    function parseTimeField(str) {
+        if (!str || str === '--:--') return null;
+        if (/^\d+:\d{1,2}(\.\d+)?$/.test(str)) {
+            const [min, sec] = str.split(':');
+            return Number(min) * 60 + Number(sec);
+        } else if (/^\d+(\.\d+)?$/.test(str)) {
+            return Number(str);
+        } else {
+            return null;
+        }
+    }
+    let vals = input.split('-');
+    if (vals.length === 2) {
+        newStart = parseTimeField(vals[0].trim());
+        newEnd = parseTimeField(vals[1].trim());
+    } else if (vals.length === 1) {
+        // If only one, overwrite start, clear end (if blank)
+        newStart = parseTimeField(vals[0].trim());
+        if (vals[0].trim() === '') newStart = null;
+        newEnd = null;
+    }
+
+    // Constrain: start >= 0, end > start, end <= start of next line
+    const prevEnd = idx > 0 && typeof lyricsArray[idx - 1].end === 'number' ? lyricsArray[idx - 1].end : undefined;
+    const nextStart = idx < lyricsArray.length - 1 && typeof lyricsArray[idx + 1].start === 'number' ? lyricsArray[idx + 1].start : undefined;
+
+    if (typeof newStart === 'number' && newStart < 0) newStart = 0;
+    if (typeof newEnd === 'number' && typeof newStart === 'number' && newEnd <= newStart) error = 'End time must be after start time!';
+    if (typeof nextStart === 'number' && typeof newEnd === 'number' && newEnd > nextStart)
+        error = `End time must not exceed start of next line (${LyricsEditor.formatTime(nextStart)})!`;
+
+    if (error) {
+        alert(error);
+        return;
+    }
+
+    LyricsEditor.setLineTimes(idx, newStart, newEnd);
+
+    // When editing times, always select the current line in UI for user feedback
+    LyricsEditor.updateEditorTarget(idx);
+    UI.highlightLyric(idx);
+    refreshLyricsToProject();
+    UI.displayLyrics(lyricsArray, undefined, onLyricTimeFieldClick);
 }

@@ -40,6 +40,9 @@
 
              <div class="timing-editor" style="display: none;">
                 <h2>Timing Editor</h2>
+                <label style="display:inline-flex; align-items:center; gap:5px; margin-bottom:7px;">
+                  <input type="checkbox" id="auto-select-next-line" style="vertical-align:middle;"> Auto select next line after end time
+                </label>
                 <p>Selected Line Time: [<span id="selected-line-start">--:--</span>] - [<span id="selected-line-end">--:--</span>]</p>
                 <button id="set-line-start" title="Set start time to current playback time">Set Start</button>
                 <button id="set-line-end" title="Set end time to current playback time">Set End</button>
@@ -47,8 +50,9 @@
                 <button id="nudge-start-forward" title="Nudge start time forward 0.1s">Start ≫</button>
                 <button id="nudge-end-back" title="Nudge end time back 0.1s">≪ End</button>
                 <button id="nudge-end-forward" title="Nudge end time forward 0.1s">End ≫</button>
-                 <button id="clear-line-times" title="Clear start and end times for this line">Clear Times</button>
-                <p><i>Click a lyric line above to select it for editing. Play audio and use buttons to set timing.</i></p>
+                <button id="clear-line-times" title="Clear start and end times for this line">Clear Times</button>
+                <p><i>Click a lyric line above to select it for editing. Play audio and use buttons to set timing.<br>
+                <b>You can also click on any [time] field to enter start/end times.</b></i></p>
                 <!-- More advanced editor features can go here -->
             </div>
         </main>

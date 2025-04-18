@@ -38,6 +38,7 @@ export const elements = {
 let isTimingEditorVisible = false;
 let lastLyricsForTimes = [];
 let lastLineTimes = null;
+let lastCustomOnTimeFieldClick = null;
 
 export function init() {
     updateLayoutPadding(false);
@@ -47,7 +48,7 @@ export function setTimingEditorVisible(visible) {
     isTimingEditorVisible = visible;
     // Optionally update existing lyrics display
     if (lastLyricsForTimes && lastLyricsForTimes.length) {
-        displayLyrics(lastLyricsForTimes, lastLineTimes);
+        displayLyrics(lastLyricsForTimes, lastLineTimes, lastCustomOnTimeFieldClick);
     }
 }
 
@@ -64,11 +65,13 @@ export function updateProjectName(title) {
  * Render the lyrics list. If in timing editor, shows line start/end times.
  * @param {Array} lyrics - Array of lyric lines, each { text, start, end }
  * @param {Function|Array} [lineTimes] - Optional: array of {start, end} (or function for advanced)
+ * @param {Function} [onTimeFieldClick] - If provided, called when the lyric-time-field is clicked
  */
-export function displayLyrics(lyrics, lineTimes) {
+export function displayLyrics(lyrics, lineTimes, onTimeFieldClick) {
     // Save arguments for re-render when timing editor mode is toggled
     lastLyricsForTimes = lyrics;
     lastLineTimes = lineTimes;
+    lastCustomOnTimeFieldClick = onTimeFieldClick;
 
     const ul = elements.lyricsList;
     ul.innerHTML = '';
@@ -90,15 +93,26 @@ export function displayLyrics(lyrics, lineTimes) {
             const timeSpan = document.createElement('span');
             timeSpan.className = 'lyric-time-field';
             timeSpan.textContent = formatLineTimes(line);
+
+            // Make time span clickable if callback provided
+            if (typeof onTimeFieldClick === 'function') {
+                timeSpan.style.cursor = 'pointer';
+                timeSpan.title = 'Click to edit timing';
+                timeSpan.addEventListener('click', function(evt) {
+                    evt.stopPropagation();
+                    onTimeFieldClick(evt);
+                });
+            }
+
             li.appendChild(timeSpan);
         }
 
         // Lyric text span (preserves alignment if time column is present)
-        // Important: set pointer-events: none on text span so <li> always receives clicks
         const textSpan = document.createElement('span');
         textSpan.className = 'lyric-line-text';
         textSpan.textContent = line.text || '';
-        textSpan.style.pointerEvents = "none";
+        // DO NOT set pointer-events:none so line can be clicked (for editing)
+        // The text span should allow click to bubble (default)
         li.appendChild(textSpan);
         ul.appendChild(li);
     });
@@ -169,6 +183,6 @@ export function updateLayoutPadding(isEditorVisible) {
     }
     // Re-render lyrics to show/hide times as needed
     if (lastLyricsForTimes && lastLyricsForTimes.length) {
-        displayLyrics(lastLyricsForTimes, lastLineTimes);
+        displayLyrics(lastLyricsForTimes, lastLineTimes, lastCustomOnTimeFieldClick);
     }
 }
