@@ -175,12 +175,45 @@ export function highlightLyric(idx) {
         if (lis[i].classList.contains('current') !== isCurrent) {
             lis[i].classList.toggle('current', isCurrent);
         }
-        if (isCurrent && elements.lyricsContainer) {
-            const containerRect = elements.lyricsContainer.getBoundingClientRect();
-            const lineRect = lis[i].getBoundingClientRect();
+    }
 
-            if (lineRect.bottom < containerRect.top + 30 || lineRect.top > containerRect.bottom - 30) {
-                lis[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Smoothly scroll the current line to the vertical center of the container if needed
+    if (typeof idx === 'number' && idx >= 0 && elements.lyricsContainer) {
+        const currentLi = elements.lyricsList.querySelector(`li[data-idx="${idx}"]`);
+        if (currentLi) {
+            // Check if the element is outside (or near the edges of) the visible viewport of the container
+            // If not, do not scroll (reduces jarring effect).
+            const container = elements.lyricsContainer;
+            const containerRect = container.getBoundingClientRect();
+            const lineRect = currentLi.getBoundingClientRect();
+
+            // Compute the visible top/bottom boundaries (add slight padding)
+            const visibleTop = containerRect.top + 30;
+            const visibleBottom = containerRect.bottom - 30;
+
+            // If the highlighted line is outside the area, or too close to the edge, recenter it
+            if (
+                lineRect.bottom < visibleTop ||
+                lineRect.top > visibleBottom ||
+                lineRect.top < containerRect.top + (containerRect.height * 0.25) ||
+                lineRect.bottom > containerRect.bottom - (containerRect.height * 0.25)
+            ) {
+                // Scroll so that the lyric is in the middle of the lyrics container
+                // This is preferable to "block: 'center'" which sometimes over/undershoots
+                const containerScrollTop = container.scrollTop;
+                const liOffsetTop = currentLi.offsetTop;
+                const liHeight = currentLi.offsetHeight;
+                const containerHeight = container.clientHeight;
+                // Center line in the visible area
+                const targetScrollTop = liOffsetTop - (containerHeight / 2) + (liHeight / 2);
+
+                // Animate scroll only if it's meaningfully different
+                if (Math.abs(containerScrollTop - targetScrollTop) > 10) {
+                    container.scrollTo({
+                        top: targetScrollTop,
+                        behavior: 'smooth'
+                    });
+                }
             }
         }
     }
@@ -198,8 +231,19 @@ export function highlightEditingLine(idx) {
             const containerRect = elements.lyricsContainer.getBoundingClientRect();
             const lineRect = lineElement.getBoundingClientRect();
 
-            if (lineRect.bottom < containerRect.top + (containerRect.height * 0.1) || lineRect.top > containerRect.bottom - (containerRect.height * 0.1)) {
-                lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Scroll editing line nicely into view (similar logic to highlightLyric)
+            const container = elements.lyricsContainer;
+            const containerScrollTop = container.scrollTop;
+            const liOffsetTop = lineElement.offsetTop;
+            const liHeight = lineElement.offsetHeight;
+            const containerHeight = container.clientHeight;
+            const targetScrollTop = liOffsetTop - (containerHeight / 2) + (liHeight / 2);
+
+            if (Math.abs(containerScrollTop - targetScrollTop) > 10) {
+                container.scrollTo({
+                    top: targetScrollTop,
+                    behavior: 'smooth'
+                });
             }
         }
     }

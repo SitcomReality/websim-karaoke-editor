@@ -283,6 +283,7 @@ button:hover {
         max-width: 99vw; 
     }
 }
+
 .lyrics-container {
     flex: 1 1 auto;
     overflow-y: auto;
@@ -298,10 +299,16 @@ button:hover {
     box-shadow: 0 2.5px 18px -11px #b0b0bb11;
     scrollbar-gutter: stable both-edges;
     transition: box-shadow 0.20s;
+    position: relative;
+    z-index: 10;
+    will-change: height;
+    box-sizing: border-box;
 }
+
 .lyrics-container:focus {
     outline: 2px solid var(--info-color);
 }
+
 #lyrics-list {
     list-style: none;
     padding: 0; 
@@ -313,6 +320,7 @@ button:hover {
     line-height: 1.38;
     min-width: 0;
 }
+
 #lyrics-list li {
     padding: 8px 16px;
     margin-bottom: 7px;
@@ -388,6 +396,7 @@ button:hover {
     font-size: 1em;
     margin: 0;
 }
+
 @media (max-width: 750px) {
     .lyrics-center { 
         padding: 8px 0 0 0; 
