@@ -233,12 +233,12 @@ function toggleTimingEditor() {
     UI.elements.toggleEditorButton.textContent = isEditing ? 'Hide Timing Editor' : 'Show Timing Editor';
     if (isEditing) {
         UI.elements.lyricsList.classList.add('editable');
-        // Re-bind editor click listeners if necessary, or ensure they are always active
         LyricsHandler.enableEditing();
     } else {
         UI.elements.lyricsList.classList.remove('editable');
         LyricsHandler.disableEditing();
     }
+    UI.updateLayoutPadding(isEditing); // Update layout based on editor visibility
 }
 
 function onAudioTimeUpdate(time) {

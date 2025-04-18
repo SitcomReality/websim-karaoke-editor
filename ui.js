@@ -17,7 +17,7 @@ export const elements = {
     loadingMessage: document.getElementById('loading-message'),
     historyList: document.getElementById('history-list'),
     controlsContainer: document.querySelector('.controls-container'),
-    timingEditor: document.querySelector('.timing-editor'),
+    timingEditorDiv: document.querySelector('.timing-editor'),
 };
 
 export function init() {
@@ -66,13 +66,19 @@ export function resetProgressBar() {
 }
 
 export function updateLayoutPadding(isEditorVisible) {
-    // This function was not defined in the original code, 
-    // so it is implemented here based on the assumption 
-    // that it should toggle the padding of the controls container 
-    // based on the visibility of the timing editor.
-    if (isEditorVisible) {
-        elements.controlsContainer.style.paddingBottom = '20px'; // Replace '20px' with your desired padding
-    } else {
-        elements.controlsContainer.style.paddingBottom = '0px';
+    // This function was not defined in the original code,
+    // so it is implemented here based on the assumption
+    // that it should adjust padding based on editor visibility.
+    // Let's adjust the main content padding instead of controls container
+    const mainContent = document.querySelector('.main-content');
+    const editorHeight = elements.timingEditorDiv?.offsetHeight || 0; // Get editor height if visible
+
+    if (mainContent) {
+         // Add extra padding-bottom to main content when editor is visible
+         // We add a bit more than the editor height for visual spacing
+         mainContent.style.paddingBottom = isEditorVisible ? `${editorHeight + 20}px` : '15px';
     }
+
+    // Re-calculate sidebar max-height if needed, especially on smaller screens
+    // This might require more complex logic depending on exact layout goals
 }
