@@ -103,69 +103,97 @@ export async function handleImportProject(event) {
         UI.setLoading(true, "Importing project...");
         const importedData = await ImportExport.importProject(file); // ImportExport handles parsing/validation
         if (importedData) {
-            // Verify assets are available in the session
-            const audioNeededId = importedData.assets.audio;
-            const imageNeededId = importedData.assets.image;
+            // Try both: By ID and by original file name (case-insensitive)!
+            // Collect all session audio and image assets
+            const sessionAudioAssets = window.KaraokeEditor?.AssetManager?.audioAssets || [];
+            const sessionImageAssets = window.KaraokeEditor?.AssetManager?.imageAssets || [];
 
-            let audioAsset = AssetManager.findAssetById(audioNeededId);
-            let imageAsset = imageNeededId ? AssetManager.findAssetById(imageNeededId) : null;
-
-            // Flexible check: Also allow matching by originalFileName if IDs do not match
-            let requireUserConfirm = false;
-            let sessionAudioAssets = (window.KaraokeEditor?.AssetManager?.audioAssets || []).concat(
-                window.KaraokeEditor?.AssetManager?.imageAssets || []
-            );
-
-            // Check audio
+            // ---- AUDIO MATCHING ----
+            let audioAsset = null;
+            // Try to match by asset id (importedData.assets.audio)
+            if (importedData.assets && importedData.assets.audio) {
+                audioAsset = sessionAudioAssets.find(a => a.id === importedData.assets.audio);
+            }
+            // If no match by id, try matching by original filename (case-insensitive)
             if (!audioAsset && importedData.meta?.originalAudioFilename) {
-                // Try to find a loaded asset with same original file name (flexible, not strict match)
-                audioAsset = (sessionAudioAssets || []).find(a =>
-                    a.originalFileName === importedData.meta.originalAudioFilename
+                audioAsset = sessionAudioAssets.find(a =>
+                    a.originalFileName && a.originalFileName.toLowerCase() === importedData.meta.originalAudioFilename.toLowerCase()
+                );
+                // If found, patch importedData asset id to use found asset (for compatibility in session)
+                if (audioAsset) {
+                    importedData.assets.audio = audioAsset.id;
+                }
+            }
+            // Extra: Try matching by filename (from id, removing prefix/junk)
+            if (!audioAsset && importedData.assets?.audio) {
+                // Attempt to match by file name only, ignoring id/random prefix
+                const importedAudioBase = importedData.assets.audio.split('_').slice(-1)[0];
+                audioAsset = sessionAudioAssets.find(a =>
+                    a.name && a.name.toLowerCase() === importedAudioBase.toLowerCase()
                 );
                 if (audioAsset) {
-                    requireUserConfirm = true;
-                    // Patch the import to use this asset
                     importedData.assets.audio = audioAsset.id;
                 }
             }
 
-            // Check image similarly if needed
-            if (imageNeededId && !imageAsset && importedData.assets?.originalImageFileName) {
-                imageAsset = (sessionAudioAssets || []).find(a =>
-                    a.originalFileName === importedData.assets.originalImageFileName
+            // ---- IMAGE MATCHING ----
+            let imageAsset = null;
+            if (importedData.assets && importedData.assets.image) {
+                imageAsset = sessionImageAssets.find(a => a.id === importedData.assets.image);
+            }
+            // Try matching by original file name, case-insensitive
+            if (!imageAsset && importedData.assets?.originalImageFileName) {
+                imageAsset = sessionImageAssets.find(a =>
+                    a.originalFileName && a.originalFileName.toLowerCase() === importedData.assets.originalImageFileName.toLowerCase()
                 );
                 if (imageAsset) {
-                    requireUserConfirm = true;
+                    importedData.assets.image = imageAsset.id;
+                }
+            }
+            // Try matching by file name from id
+            if (!imageAsset && importedData.assets?.image) {
+                const importedImageBase = importedData.assets.image.split('_').slice(-1)[0];
+                imageAsset = sessionImageAssets.find(a =>
+                    a.name && a.name.toLowerCase() === importedImageBase.toLowerCase()
+                );
+                if (imageAsset) {
                     importedData.assets.image = imageAsset.id;
                 }
             }
 
-            // If still missing, error (for audio at least)
+            // ---- USER FEEDBACK ----
+            let requireUserConfirm = false;
+            let audioWarning = '';
             if (!audioAsset) {
-                let msg = `Missing required audio asset ID: "${audioNeededId}".`;
-                if (importedData.meta?.originalAudioFilename) {
-                    msg += `\nIf you have the correct song file, try uploading it using the "Audio (MP3)" field.\nExpected filename: "${importedData.meta.originalAudioFilename}"`;
+                audioWarning = `Missing required audio asset ID: "${importedData.assets?.audio}"`;
+                // Tell user we will allow forcibly linking to any other in-session audio file with matching file name
+                if (sessionAudioAssets.length) {
+                    // Try to prompt with files they can re-link
+                    const availableNames = sessionAudioAssets.map(a => `"${a.originalFileName || a.name}"`).join(', ');
+                    audioWarning += `\n\nYou have audio files loaded in this session: ${availableNames}\n\nThe project expects:\n  "${importedData.meta?.originalAudioFilename || importedData.assets?.audio}"\nIf one of your loaded files is actually the same song, you can rename it before import, or try re-uploading it with a matching name.`;
+                } else {
+                    audioWarning += `\nPlease load a matching audio file using 'Load Files' before importing.`;
                 }
-                throw new Error(msg);
+                throw new Error(audioWarning);
+            } else if (audioAsset.originalFileName && importedData.meta?.originalAudioFilename &&
+                audioAsset.originalFileName.toLowerCase() !== importedData.meta.originalAudioFilename.toLowerCase()
+            ) {
+                requireUserConfirm = true;
+                audioWarning =
+                    "The audio file linked for this project is NOT the exact same original filename expected by the song's timing.\n" +
+                    `Expected: "${importedData.meta.originalAudioFilename}"\n` +
+                    `Using:    "${audioAsset.originalFileName}"\n` +
+                    "The timings and playback may not match your lyrics. Continue anyway?";
             }
 
-            if (requireUserConfirm) {
-                let warnMsg =
-                    "The audio file name in the imported project does not exactly match any loaded audio files.\n" +
-                    "However, we found a file in your session with the same original filename.\n" +
-                    "The timings may not be correct if this is a different file!\n\n" +
-                    `Project expects: "${importedData.meta?.originalAudioFilename || '[unknown]'}"\n` +
-                    `Using in-session file: "${audioAsset.originalFileName || audioAsset.name || '[unknown]'}"\n` +
-                    "Continue loading with this file?";
-                if (!window.confirm(warnMsg)) {
-                    UI.setLoading(false);
-                    event.target.value = '';
-                    return;
-                }
+            if (requireUserConfirm && !window.confirm(audioWarning)) {
+                UI.setLoading(false);
+                event.target.value = '';
+                return;
             }
 
-            // Assets verified/found, load the project via ProjectController
-            ProjectController.loadProject(importedData, true); // Pass true to indicate it's an import and should be saved to history
+            // ---- LOAD PROJECT ----
+            ProjectController.loadProject(importedData, true); // Mark as imported, save to history
 
             alert(`Project "${importedData.meta.title}" imported successfully!`);
         }
