@@ -215,6 +215,7 @@ body {
     flex-grow: 1;
     text-align: left;
     display: inline-block;
+    pointer-events: none;
 }
 
 .controls-container {

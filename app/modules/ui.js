@@ -94,9 +94,11 @@ export function displayLyrics(lyrics, lineTimes) {
         }
 
         // Lyric text span (preserves alignment if time column is present)
+        // Important: set pointer-events: none on text span so <li> always receives clicks
         const textSpan = document.createElement('span');
         textSpan.className = 'lyric-line-text';
         textSpan.textContent = line.text || '';
+        textSpan.style.pointerEvents = "none";
         li.appendChild(textSpan);
         ul.appendChild(li);
     });
