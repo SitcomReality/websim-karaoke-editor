@@ -240,4 +240,23 @@ function toggleTimingEditor() {
     } else {
         UI.elements.lyricsList.classList.remove('editable');
         LyricsHandler.disableEditing();
+    }
+}
 
+// --- Expose for debugging (optional) ---
+window.KaraokeEditor = {
+    UI,
+    AudioHandler,
+    LyricsHandler,
+    Storage,
+    Customization,
+    ImportExport,
+    ProjectManager,
+    PlaylistManager,
+    AssetManager,
+    init,
+    get currentProject() { return currentProject; }
+};
+
+// --- Start the app ---
+window.addEventListener('DOMContentLoaded', init);
