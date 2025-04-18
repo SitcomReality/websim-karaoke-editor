@@ -1,7 +1,7 @@
 // app/modules/ui/playbackDisplay.js
 // Handles updating the playback progress bar, time labels, and related UI elements.
 
-import { elements } from './ui.js';
+import { elements } from './elements.js';
 
 /**
  * Resets the progress bar and time labels to their initial state (0:00).

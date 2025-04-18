@@ -1,8 +1,8 @@
 // app/modules/ui/lyricsDisplay.js
 // Handles rendering lyrics, highlighting, and scrolling the lyrics container.
 
-import { elements } from './ui.js';
-import { formatTime } from './playbackController.js'; // Needed for formatting times within lyrics
+import { elements } from './elements.js';
+import { formatTime } from '../ui.js'; // Corrected import path via facade
 
 /**
  * Renders the lyrics lines in the designated list element.
@@ -150,7 +150,6 @@ function scrollLyricIntoView(li) {
     }
 }
 
-
 /**
  * Formats the start and end times of a lyric line for display.
  * @param {object} line - Lyric object ({start, end}).
@@ -158,8 +157,8 @@ function scrollLyricIntoView(li) {
  */
 function formatLineTimes(line) {
     if (!line) return '[--:--]';
-    const startStr = formatTime(line.start); // Use formatTime from playbackController
-    const endStr = formatTime(line.end);
+    const startStr = formatTime(line.start); // Use imported formatTime
+    const endStr = formatTime(line.end); // Use imported formatTime
 
     if (startStr !== '--:--') {
         if (endStr !== '--:--') {
