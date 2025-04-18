@@ -39,9 +39,12 @@ export const elements = {
     colorTextInput: document.getElementById('color-text'),
     colorHighlightBgInput: document.getElementById('color-highlight-bg'),
     colorHighlightTextInput: document.getElementById('color-highlight-text'),
-    footerContainer: document.getElementById('footer-container'),
+    footerContainer: document.getElementById('footer-root'),
     footerTimingEditor: document.getElementById('footer-timing-editor'),
     footerControls: document.getElementById('footer-controls'),
+    sidebar: document.getElementById('sidebar'),
+    sidebarToggle: document.getElementById('toggle-sidebar'),
+    mainContentFrame: document.getElementById('main-content-frame'),
 };
 
 let isTimingEditorVisible = false;
@@ -50,6 +53,37 @@ let lastCustomOnTimeFieldClick = null;
 
 export function init() {
     updateLayoutPadding(false);
+
+    // Sidebar toggle button: UX slide in/out
+    if (elements.sidebar && elements.sidebarToggle) {
+        elements.sidebarToggle.addEventListener('click', () => {
+            const collapsed = elements.sidebar.classList.toggle('collapsed');
+            handleSidebarStateForLayout(collapsed);
+        });
+    }
+    // Responsive: Auto-collapse sidebar on small screens after navigation
+    window.addEventListener('resize', () => {
+        if (window.innerWidth < 800 && !elements.sidebar.classList.contains('collapsed')) {
+            elements.sidebar.classList.add('collapsed');
+            handleSidebarStateForLayout(true);
+        }
+    });
+    // Start in collapsed mode for mobile
+    if(window.innerWidth<800) elements.sidebar?.classList.add('collapsed');
+    handleSidebarStateForLayout(elements.sidebar?.classList.contains('collapsed'));
+}
+
+function handleSidebarStateForLayout(collapsed) {
+    if (collapsed) {
+        elements.mainContentFrame?.classList.add('sidebar-collapsed');
+        // Optionally: ARIA attr for access
+        elements.sidebarToggle?.setAttribute('aria-expanded', 'false');
+    } else {
+        elements.mainContentFrame?.classList.remove('sidebar-collapsed');
+        elements.sidebarToggle?.setAttribute('aria-expanded', 'true');
+    }
+    // Update layout padding just in case
+    updateLayoutPadding(isTimingEditorVisible);
 }
 
 export function setTimingEditorVisible(visible) {
@@ -108,11 +142,14 @@ export function displayLyrics(lyrics, showTimes, onTimeFieldClick) {
             li.appendChild(timeSpan);
         }
 
+        // Allow li to be clicked everywhere, including text
         const textSpan = document.createElement('span');
         textSpan.className = 'lyric-line-text';
         textSpan.textContent = line.text || '';
-        textSpan.style.pointerEvents = 'none'; // Ensure clicks pass through this span to <li>
+        // pointer-events: auto - clicks propagate naturally now
+        textSpan.style.pointerEvents = 'auto';
         li.appendChild(textSpan);
+
         ul.appendChild(li);
     });
 }
@@ -213,7 +250,8 @@ export function updateTimingEditorFields(idx, lineData) {
 }
 
 export function updateLayoutPadding(isEditorVisible) {
-    const mainContent = document.querySelector('.main-content');
+    // ensure main-content isn't behind the footer, regardless of height of controls/timing
+    const mainContent = elements.mainContentFrame;
     const footerTimingEditor = elements.footerTimingEditor;
     const footerControls = elements.footerControls;
 
@@ -226,10 +264,9 @@ export function updateLayoutPadding(isEditorVisible) {
     }
     if (totalFooterHeight < 80) { 
         totalFooterHeight = isEditorVisible
-            ? 185 + 90 
-            : 90;     
+            ? 170 + 92 
+            : 92;     
     }
-
     if (mainContent) {
         mainContent.style.paddingBottom = totalFooterHeight + 'px';
     }
