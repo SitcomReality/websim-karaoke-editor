@@ -15,12 +15,13 @@
     --success-color: #5cb85c;
     --info-color: #5bc0de;
     --warning-color: #f0ad4e;
-    /* Define variables for layout constants */
     --sidebar-width: 350px;
     --container-padding: 15px;
     --container-gap: 15px;
-    --controls-height: 90px; /* Approximate height of footer controls */
-    --header-min-height: 100px; /* Approximate height of header */
+    --controls-height: 90px;
+    --timing-editor-height: 185px;
+    --header-min-height: 100px;
+    --footer-total-height: calc(var(--controls-height) + var(--timing-editor-height));
 }
 
 body {
@@ -32,7 +33,6 @@ body {
     padding-top: var(--container-padding); 
     padding-left: var(--container-padding); 
     padding-right: var(--container-padding); 
-    padding-bottom: calc(var(--controls-height) + 150px); 
     box-sizing: border-box;
     overflow-x: hidden; 
     position: relative; 
@@ -137,26 +137,21 @@ body {
     grid-area: main;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Changed from hidden to allow child scrolling */
-    padding-bottom: 15px;
+    overflow: hidden;
+    padding-bottom: var(--controls-height); 
     transition: padding-bottom 0.3s ease;
-    /* Ensure main content can shrink if needed, but also grow */
-    min-height: 0; /* Important for flex item children with overflow */
+    min-height: 0;
 }
 
 .lyrics-container {
-    flex-grow: 1; /* Allow it to take up available space */
-    overflow-y: auto; /* Enable vertical scrolling within this container */
+    flex-grow: 1;
+    overflow-y: auto;
     padding: 15px;
     background-color: rgba(255, 255, 255, 0.8); 
     border-radius: 5px;
     scroll-behavior: smooth; 
     border: 1px solid var(--panel-border-color);
-    /* Remove fixed min-height, let flexbox handle it */
-    /* min-height: 300px; */
-    /* Add max-height relative to viewport minus other elements */
-    max-height: calc(100vh - var(--header-min-height) - var(--controls-height) - 2 * var(--container-gap) - 2 * var(--container-padding));
-    /* Add a fallback min-height for very small viewports or when editor is open */
+    max-height: unset; 
     min-height: 200px;
 }
 
@@ -209,8 +204,8 @@ body {
 
 #lyrics-list li .lyric-time-field {
     display: inline-block;
-    min-width: 76px; /* Adjust as needed */
-    max-width: 90px; /* Adjust as needed */
+    min-width: 76px;
+    max-width: 90px;
     text-align: right;
     font-family: monospace;
     font-size: 1em;
@@ -218,93 +213,15 @@ body {
     opacity: 0.85;
     margin-right: 10px;
     flex-shrink: 0;
-    white-space: pre; /* Keep whitespace formatting */
-    cursor: pointer; /* Add cursor pointer */
-    user-select: none; /* Prevent text selection */
+    white-space: pre;
+    cursor: pointer;
+    user-select: none;
 }
 #lyrics-list li .lyric-line-text {
     flex-grow: 1;
     text-align: left;
-    display: inline-block; /* Keep as inline-block */
-    pointer-events: none; /* Re-apply pointer-events none */
-}
-
-.controls-container {
-    position: fixed;
-    bottom: 0;
-    left: var(--container-padding); 
-    width: calc(100% - var(--sidebar-width) - var(--container-gap) - 2 * var(--container-padding));
-    max-width: calc(1300px - var(--sidebar-width) - var(--container-gap)); 
-    margin-left: auto; 
-    margin-right: auto;
-
-    background-color: var(--control-bg-color);
-    padding: 10px;
-    border-radius: 5px 5px 0 0; 
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 100; 
-    border-top: 1px solid var(--panel-border-color);
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-}
-
-.playback-controls, .progress-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.progress-controls {
-    width: 100%;
-}
-
-#progress-bar {
-    flex-grow: 1;
-    cursor: pointer;
-}
-#volume-slider {
-    width: 80px;
-    cursor: pointer;
-    vertical-align: middle; 
-}
-
-.timing-editor {
-    position: fixed;
-    bottom: calc(100px + 10px); 
-    left: var(--container-padding); 
-    width: calc(100% - var(--sidebar-width) - var(--container-gap) - 2 * var(--container-padding));
-    max-width: calc(1300px - var(--sidebar-width) - var(--container-gap)); 
-    margin-left: auto;
-    margin-right: auto;
-
-    background-color: var(--panel-bg-color);
-    padding: 15px;
-    border-radius: 5px 5px 0 0; 
-    border: 1px solid var(--panel-border-color);
-    border-bottom: none; 
-    z-index: 99; 
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
-    box-sizing: border-box;
-    display: none; 
-}
-
-.timing-editor h2 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-}
-
-.timing-editor p {
-    margin: 8px 0;
-}
-
-.timing-editor button {
-     margin: 3px 2px;
-     padding: 5px 8px;
-     font-size: 0.9em;
+    display: inline-block;
+    pointer-events: none;
 }
 
 .sidebar {
@@ -458,13 +375,11 @@ button:active {
     cursor: grabbing;
 }
 
-/* Basic styling for placeholder drag element */
 .sortable-ghost {
     opacity: 0.4;
     background: #c8ebfb;
 }
 
-/* Style for playlist controls */
 .playlist-controls {
     display: flex;
     flex-wrap: wrap;
@@ -488,7 +403,6 @@ button:active {
     margin: 0; 
 }
 
-/* Placeholder text style */
 .placeholder {
     color: var(--placeholder-color);
     font-style: italic;
@@ -498,7 +412,64 @@ button:active {
      opacity: 1 !important;
 }
 
-/* Small screen adjustments */
+.footer-container {
+    width: 100vw;
+    left: 0;
+    bottom: 0;
+    position: fixed;
+    z-index: 120;
+    background: none;
+    pointer-events: none;
+}
+
+.footer-inner {
+    width: 100%;
+    max-width: 1300px;
+    min-width: 0;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    pointer-events: all;
+}
+
+.footer-timing-editor {
+    width: 100%;
+    background-color: var(--panel-bg-color);
+    border: 1px solid var(--panel-border-color);
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    z-index: 130;
+}
+
+.footer-controls {
+    width: 100%;
+    background-color: var(--control-bg-color);
+    border-radius: 0 0 5px 5px;
+    padding: 10px;
+    border: 1px solid var(--panel-border-color);
+    border-top: none;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 140;
+}
+
+.footer-controls .playback-controls,
+.footer-controls .progress-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.controls-container,
+.timing-editor {
+    display: none !important;
+}
+
 @media (max-width: 850px) { 
     body {
         padding-left: 5px;
@@ -507,29 +478,26 @@ button:active {
     }
     .container {
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto 1fr auto; /* Adjust rows for header, main, sidebar, controls */
+        grid-template-rows: auto auto 1fr auto;
         grid-template-areas:
             "header"
             "main"
-            "sidebar"; /* Controls are fixed at bottom */
+            "sidebar";
         gap: 10px;
         padding: 0; 
         border-radius: 0;
         box-shadow: none;
         margin: 0;
-        /* Ensure container takes full height */
-        min-height: calc(100vh - 100px); /* Adjust for controls height */
+        min-height: calc(100vh - 100px);
     }
 
     .main-content {
-         /* Allow main content (lyrics) to scroll if needed, even on small screens */
-         min-height: 150px; /* Ensure it doesn't collapse too much */
+         min-height: 150px;
     }
 
     .lyrics-container {
-        /* Adjust max-height for smaller screens */
-        max-height: 50vh; /* Example: limit to half the viewport height */
-        min-height: 150px; /* Reduce min-height slightly */
+        max-height: 50vh;
+        min-height: 150px;
     }
 
     .sidebar {
@@ -540,7 +508,7 @@ button:active {
 
      .main-header {
         border-radius: 0;
-        min-height: 60px; /* Reduce header height */
+        min-height: 60px;
      }
      #song-image-container {
          max-height: 50px;
@@ -549,25 +517,13 @@ button:active {
          font-size: 1.2em;
      }
 
-
-     .controls-container, .timing-editor {
-        left: 0;
-        width: 100%;
-        max-width: none;
-        border-radius: 0;
-        position: fixed; /* Ensure they remain fixed */
-        margin-left: 0;
-        margin-right: 0;
-    }
-    .controls-container {
-        bottom: 0;
-        z-index: 100; /* Keep controls above timing editor */
-    }
-
-    .timing-editor {
-         bottom: var(--controls-height); /* Position above controls */
-         border-radius: 0;
-         border-bottom: 1px solid var(--panel-border-color); /* Add border back */
-         z-index: 99;
+     .footer-container, .footer-inner {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        max-width: none !important;
+        border-radius: 0 !important;
+        position: fixed !important;
+        margin: 0 !important;
     }
 }

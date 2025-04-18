@@ -37,24 +37,6 @@
                     <li class="placeholder">Load lyrics file to start...</li>
                 </ul>
             </div>
-
-             <div class="timing-editor" style="display: none;">
-                <h2>Timing Editor</h2>
-                <label style="display:inline-flex; align-items:center; gap:5px; margin-bottom:7px;">
-                  <input type="checkbox" id="auto-select-next-line" style="vertical-align:middle;"> Auto select next line after end time
-                </label>
-                <p>Selected Line Time: [<span id="selected-line-start">--:--</span>] - [<span id="selected-line-end">--:--</span>]</p>
-                <button id="set-line-start" title="Set start time to current playback time">Set Start</button>
-                <button id="set-line-end" title="Set end time to current playback time">Set End</button>
-                <button id="nudge-start-back" title="Nudge start time back 0.1s">≪ Start</button>
-                <button id="nudge-start-forward" title="Nudge start time forward 0.1s">Start ≫</button>
-                <button id="nudge-end-back" title="Nudge end time back 0.1s">≪ End</button>
-                <button id="nudge-end-forward" title="Nudge end time forward 0.1s">End ≫</button>
-                <button id="clear-line-times" title="Clear start and end times for this line">Clear Times</button>
-                <p><i>Click a lyric line above to select it for editing. Play audio and use buttons to set timing.<br>
-                <b>You can also click on any [time] field to enter start/end times.</b></i></p>
-                <!-- More advanced editor features can go here -->
-            </div>
         </main>
 
         <aside class="sidebar">
@@ -151,23 +133,43 @@
             </div>
         </aside>
 
-        <footer class="controls-container">
-            <div class="playback-controls">
+        <audio id="audio-player" preload="metadata"></audio>
+    </div>
+
+    <!-- FOOTER (always fixed): Timing Editor + Controls -->
+    <div class="footer-container" id="footer-container">
+      <div class="footer-inner">
+        <div class="footer-timing-editor" id="footer-timing-editor" style="display: none;">
+           <h2>Timing Editor</h2>
+           <label style="display:inline-flex; align-items:center; gap:5px; margin-bottom:7px;">
+              <input type="checkbox" id="auto-select-next-line" style="vertical-align:middle;"> Auto select next line after end time
+           </label>
+           <p>Selected Line Time: [<span id="selected-line-start">--:--</span>] - [<span id="selected-line-end">--:--</span>]</p>
+           <button id="set-line-start" title="Set start time to current playback time">Set Start</button>
+           <button id="set-line-end" title="Set end time to current playback time">Set End</button>
+           <button id="nudge-start-back" title="Nudge start time back 0.1s">≪ Start</button>
+           <button id="nudge-start-forward" title="Nudge start time forward 0.1s">Start ≫</button>
+           <button id="nudge-end-back" title="Nudge end time back 0.1s">≪ End</button>
+           <button id="nudge-end-forward" title="Nudge end time forward 0.1s">End ≫</button>
+           <button id="clear-line-times" title="Clear start and end times for this line">Clear Times</button>
+           <p><i>Click a lyric line above to select it for editing. Play audio and use buttons to set timing.<br>
+           <b>You can also click on any [time] field to enter start/end times.</b></i></p>
+        </div>
+        <div class="footer-controls" id="footer-controls">
+          <div class="playback-controls">
                <button id="prev-song" title="Previous Song (Playlist)">⏮️</button>
                <button id="play-pause" title="Play/Pause">▶️ Play</button>
                <button id="next-song" title="Next Song (Playlist)">⏭️</button>
                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" title="Volume">
                <span>🔊</span>
-            </div>
-            <div class="progress-controls">
+          </div>
+          <div class="progress-controls">
                 <span id="current-time">0:00</span>
                 <input type="range" id="progress-bar" value="0" step="0.1" title="Seek">
                 <span id="duration">0:00</span>
-            </div>
-       </footer>
-
-
-        <audio id="audio-player" preload="metadata"></audio>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="./app/main.js"></script>

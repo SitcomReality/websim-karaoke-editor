@@ -16,8 +16,8 @@ export const elements = {
     loadingOverlay: document.getElementById('loading-overlay'),
     loadingMessage: document.getElementById('loading-message'),
     historyList: document.getElementById('history-list'),
-    controlsContainer: document.querySelector('.controls-container'),
-    timingEditorDiv: document.querySelector('.timing-editor'),
+    timingEditorDiv: document.getElementById('footer-timing-editor'),
+    controlsContainer: document.getElementById('footer-controls'),
     playPauseButton: document.getElementById('play-pause'),
     prevSongButton: document.getElementById('prev-song'),
     nextSongButton: document.getElementById('next-song'),
@@ -39,6 +39,9 @@ export const elements = {
     colorTextInput: document.getElementById('color-text'),
     colorHighlightBgInput: document.getElementById('color-highlight-bg'),
     colorHighlightTextInput: document.getElementById('color-highlight-text'),
+    footerContainer: document.getElementById('footer-container'),
+    footerTimingEditor: document.getElementById('footer-timing-editor'),
+    footerControls: document.getElementById('footer-controls'),
 };
 
 let isTimingEditorVisible = false;
@@ -51,9 +54,13 @@ export function init() {
 
 export function setTimingEditorVisible(visible) {
     isTimingEditorVisible = visible;
+    if (elements.footerTimingEditor) {
+        elements.footerTimingEditor.style.display = visible ? 'block' : 'none';
+    }
     if (lastLyricsForTimes && lastLyricsForTimes.length) {
         displayLyrics(lastLyricsForTimes, isTimingEditorVisible, lastCustomOnTimeFieldClick);
     }
+    updateLayoutPadding(isTimingEditorVisible);
 }
 
 export function setLoading(isLoading, message = "Loading...") {
@@ -104,13 +111,10 @@ export function displayLyrics(lyrics, showTimes, onTimeFieldClick) {
         const textSpan = document.createElement('span');
         textSpan.className = 'lyric-line-text';
         textSpan.textContent = line.text || '';
+        textSpan.style.pointerEvents = 'none'; // Ensure clicks pass through this span to <li>
         li.appendChild(textSpan);
         ul.appendChild(li);
     });
-
-    // Re-apply editing highlight if needed (e.g., after redraw)
-    // Find the currently edited line index from LyricsEditor (need access or state)
-    // For now, let's assume highlightEditingLine will be called separately when needed.
 }
 
 export function displaySongImage(url) {
@@ -208,6 +212,36 @@ export function updateTimingEditorFields(idx, lineData) {
     });
 }
 
+export function updateLayoutPadding(isEditorVisible) {
+    const mainContent = document.querySelector('.main-content');
+    const footerTimingEditor = elements.footerTimingEditor;
+    const footerControls = elements.footerControls;
+
+    let totalFooterHeight = 0;
+    if (footerControls) {
+        totalFooterHeight += footerControls.offsetHeight;
+    }
+    if (isEditorVisible && footerTimingEditor && footerTimingEditor.style.display !== 'none') {
+        totalFooterHeight += footerTimingEditor.offsetHeight;
+    }
+    if (totalFooterHeight < 80) { 
+        totalFooterHeight = isEditorVisible
+            ? 185 + 90 
+            : 90;     
+    }
+
+    if (mainContent) {
+        mainContent.style.paddingBottom = totalFooterHeight + 'px';
+    }
+}
+
+export function updateThemeInputs(theme) {
+    if (elements.colorBgInput) elements.colorBgInput.value = theme.background || '#f0f0f0';
+    if (elements.colorTextInput) elements.colorTextInput.value = theme.text || '#333333';
+    if (elements.colorHighlightBgInput) elements.colorHighlightBgInput.value = theme.highlightBg || '#ffff99';
+    if (elements.colorHighlightTextInput) elements.colorHighlightTextInput.value = theme.highlightText || '#000000';
+}
+
 export function formatTime(val) {
     if (val === null || typeof val !== 'number' || isNaN(val)) return '--:--';
     const totalSeconds = Math.max(0, val);
@@ -228,19 +262,4 @@ function formatLineTimes(line) {
         return `[${startStr}]`;
     }
     return '[--:--]';
-}
-
-export function updateLayoutPadding(isEditorVisible) {
-    const mainContent = document.querySelector('.main-content');
-    const editorHeight = elements.timingEditorDiv?.offsetHeight || 0;
-    if (mainContent) {
-        mainContent.style.paddingBottom = isTimingEditorVisible ? `${editorHeight + 20}px` : '15px';
-    }
-}
-
-export function updateThemeInputs(theme) {
-    if (elements.colorBgInput) elements.colorBgInput.value = theme.background || '#f0f0f0';
-    if (elements.colorTextInput) elements.colorTextInput.value = theme.text || '#333333';
-    if (elements.colorHighlightBgInput) elements.colorHighlightBgInput.value = theme.highlightBg || '#ffff99';
-    if (elements.colorHighlightTextInput) elements.colorHighlightTextInput.value = theme.highlightText || '#000000';
 }
