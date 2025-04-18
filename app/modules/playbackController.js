@@ -3,14 +3,14 @@
 
 import * as AudioHandler from './audioHandler.js';
 
-let UI, ProjectController, LyricsEditor; // Injected dependencies
+let UI, ProjectController, LyricsEditor; // Added LyricsEditor dependency
 let duration = 0;
 let ignoreProgressBarUpdate = false; // Flag to prevent feedback loop during seek
 
 export function init(dependencies) {
     UI = dependencies.UI;
     ProjectController = dependencies.ProjectController;
-    LyricsEditor = dependencies.LyricsEditor;
+    LyricsEditor = dependencies.LyricsEditor; // Direct dependency injection
 
     // Initialize AudioHandler with callbacks managed by this controller
     AudioHandler.init(onAudioTimeUpdate, onAudioEnded, onAudioLoaded);

@@ -9,7 +9,12 @@ export function init(dependencies) {
 }
 
 function bindEvents() {
-    const { UI, FileHandler, ProjectController, PlaybackController, TimingEditorController, ProjectManager } = controllers;
+    // Destructure all necessary controllers/modules passed in dependencies
+    const {
+        UI, FileHandler, ProjectController, PlaybackController,
+        TimingEditorController, ProjectManager, LyricsEditor, Customization 
+        // Add other controllers like PlaylistManager if needed
+    } = controllers;
 
     // File loading
     UI.elements.loadFilesButton.addEventListener('click', FileHandler.handleLoadNewSong);
@@ -24,16 +29,19 @@ function bindEvents() {
 
     // History interaction
     UI.elements.historyList.addEventListener('click', (e) => {
-        if (e.target.tagName === 'LI' && e.target.dataset.projectId) {
-             // Use ProjectManager to initiate load via ProjectController
-            ProjectManager.loadProject(e.target.dataset.projectId);
-        } else if (e.target.classList.contains('delete-history-btn') && e.target.dataset.projectId) {
+        const target = e.target;
+        const li = target.closest('li[data-project-id]');
+
+        if (target.classList.contains('delete-history-btn') && target.dataset.projectId) {
+            e.stopPropagation(); // Prevent triggering load
             if (confirm('Are you sure you want to delete this song from history? This cannot be undone.')) {
-                // Use ProjectManager to delete and update history UI
-                ProjectManager.deleteProjectFromHistory(e.target.dataset.projectId);
+                ProjectManager.deleteProjectFromHistory(target.dataset.projectId);
             }
+        } else if (li) {
+            ProjectManager.loadProject(li.dataset.projectId);
         }
     });
+
 
     // Playback UI events
     UI.elements.playPauseButton.addEventListener('click', PlaybackController.onPlayPauseClicked);
@@ -51,13 +59,12 @@ function bindEvents() {
     UI.elements.nudgeEndForwardButton.addEventListener('click', () => TimingEditorController.onNudgeEnd(0.1));
     UI.elements.clearLineTimesButton.addEventListener('click', TimingEditorController.onClearLineTimes);
 
-    // Auto-select next line checkbox
-    const autoSelectCheckbox = document.getElementById('auto-select-next-line');
-    if (autoSelectCheckbox) {
-        autoSelectCheckbox.addEventListener('change', TimingEditorController.onAutoSelectNextChange);
-    }
+    // Lyrics list click for editing (now handled within LyricsEditor enable/disable)
+    // Note: The click listener for time fields is added dynamically in UI.displayLyrics
 
-    // Customization controls (Example - adapt as needed)
+    // Auto-select next line checkbox listener moved to TimingEditorController.init
+
+    // Customization controls
     const fontSelect = document.getElementById('font-select');
     const googleFontInput = document.getElementById('google-font-input');
     const loadGoogleFontBtn = document.getElementById('load-google-font');
@@ -69,10 +76,35 @@ function bindEvents() {
     const extractColorsBtn = document.getElementById('extract-colors');
     const resetThemeBtn = document.getElementById('reset-theme');
 
-    // Add listeners for customization if needed, potentially in a separate customization controller/binder
-    // applyThemeBtn.addEventListener('click', () => { /* call customization method */ });
-    // extractColorsBtn.addEventListener('click', () => { /* call customization method */ });
-    // resetThemeBtn.addEventListener('click', () => { /* call customization method */ });
+    // Example Customization bindings (can be expanded)
+    applyThemeBtn.addEventListener('click', () => {
+        const theme = {
+            background: colorBg.value,
+            text: colorText.value,
+            highlightBg: colorHighlightBg.value,
+            highlightText: colorHighlightText.value,
+        };
+        ProjectController.applyAndSaveTheme(theme); // Use ProjectController to manage theme state
+    });
+    extractColorsBtn.addEventListener('click', () => {
+        const project = ProjectController.getCurrentProject();
+        const imageAsset = project?.assets?.image ? ProjectController.findAssetById(project.assets.image) : null;
+        if (imageAsset?.url) {
+            Customization.extractAndApplyColors(imageAsset.url, true); // Auto-apply extracted colors
+        } else {
+            alert("Load an image first to extract colors.");
+        }
+    });
+    resetThemeBtn.addEventListener('click', () => {
+         const defaultTheme = Customization.getDefaultTheme();
+         ProjectController.applyAndSaveTheme(defaultTheme); // Apply and save default
+         // Also reset color input UI elements
+         colorBg.value = defaultTheme.background;
+         colorText.value = defaultTheme.text;
+         colorHighlightBg.value = defaultTheme.highlightBg;
+         colorHighlightText.value = defaultTheme.highlightText;
+    });
+    // Add font loading logic if needed
 
     // Playlist controls (Example - adapt as needed)
     const addToPlaylistBtn = document.getElementById('add-to-playlist');
@@ -80,9 +112,9 @@ function bindEvents() {
     const savePlaylistBtn = document.getElementById('save-playlist');
     const importPlaylistInput = document.getElementById('import-playlist');
     const exportPlaylistBtn = document.getElementById('export-playlist');
-    // Add listeners for playlist controls...
+    // Add listeners for playlist controls... (using PlaylistManager potentially)
 
     // Asset controls (Example - adapt as needed)
     const clearAssetsBtn = document.getElementById('clear-assets');
-    // Add listeners for asset controls...
+    // Add listeners for asset controls... (using AssetManager potentially)
 }
