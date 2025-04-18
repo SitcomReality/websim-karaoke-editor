@@ -1,3 +1,4 @@
+import Sortable from 'sortablejs';
 import * as UI from './ui.js';
 import * as AudioHandler from './audio.js';
 import * as LyricsHandler from './lyrics.js';
@@ -16,24 +17,24 @@ let isEditing = false; // Flag to indicate if timing editor is active
 function init() {
     console.log("Karaoke Editor Initializing...");
 
-    // Initialize Modules
+    // Initialize Modules (Order might matter due to dependencies)
     UI.init();
-    AudioHandler.init();
-    LyricsHandler.init();
-    Storage.init();
-    Customization.init();
-    AssetManager.init();
-    PlaylistManager.init(); // Depends on AssetManager for checks
-    ProjectManager.init(); // Depends on other modules
+    Storage.init(); // Load saved data early
+    AssetManager.init(); // Manage assets available this session
+    AudioHandler.init(onAudioTimeUpdate, onAudioEnded, onAudioLoaded); // Pass callbacks
+    LyricsHandler.init(getAudioTime, onTimingChange); // Pass callbacks
+    Customization.init(applyTheme); // Pass callback
+    PlaylistManager.init(loadAndPlayProject, onPlaylistUpdate); // Pass callbacks
+    ProjectManager.init(loadProjectDataIntoModules); // Pass callback
 
     // Setup Event Listeners handled by UI module or specific handlers
     setupCoreEventListeners();
 
-    // Load initial state (history, assets, etc.)
+    // Load initial state
     ProjectManager.loadHistory();
-    AssetManager.loadSessionAssets(); // Display assets available in this session
-    PlaylistManager.loadPlaylists(); // Load saved playlists
-    PlaylistManager.displayPlaylist(); // Display the current or default playlist
+    AssetManager.loadSessionAssets(); // Display assets available in this session (from sessionStorage)
+    PlaylistManager.loadCurrentPlaylist(); // Load the active playlist
+    Customization.applyTheme(Storage.loadTheme() || Customization.getDefaultTheme()); // Apply saved or default theme
 
 
     console.log("Initialization Complete.");
@@ -68,7 +69,6 @@ function setupCoreEventListeners() {
         }
     });
 }
-
 
 // --- Core Functionality ---
 
@@ -127,7 +127,6 @@ async function handleLoadNewSong() {
         if (isEditing) {
              LyricsHandler.updateEditorTarget(null); // Clear editor selection
         }
-
 
         // Reset file inputs for next use
         UI.elements.audioUpload.value = '';
@@ -228,7 +227,6 @@ async function handleImportProject(event) {
     }
 }
 
-
 function toggleTimingEditor() {
     isEditing = !isEditing;
     UI.elements.timingEditorDiv.style.display = isEditing ? 'block' : 'none';
@@ -241,6 +239,42 @@ function toggleTimingEditor() {
         UI.elements.lyricsList.classList.remove('editable');
         LyricsHandler.disableEditing();
     }
+}
+
+function onAudioTimeUpdate(time) {
+    // Update logic for onAudioTimeUpdate
+}
+
+function onAudioEnded() {
+    // Update logic for onAudioEnded
+}
+
+function onAudioLoaded() {
+    // Update logic for onAudioLoaded
+}
+
+function getAudioTime() {
+    // Update logic for getAudioTime
+}
+
+function onTimingChange() {
+    // Update logic for onTimingChange
+}
+
+function applyTheme(theme) {
+    // Update logic for applyTheme
+}
+
+function loadAndPlayProject(project) {
+    // Update logic for loadAndPlayProject
+}
+
+function onPlaylistUpdate() {
+    // Update logic for onPlaylistUpdate
+}
+
+function loadProjectDataIntoModules(project) {
+    // Update logic for loadProjectDataIntoModules
 }
 
 // --- Expose for debugging (optional) ---
